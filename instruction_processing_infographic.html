@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How an Instruction is Processed in a Computer — COA Study Infographic</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Inter and JetBrains Mono for technical typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cyberDark: '#0B0F19',
+            cardBg: '#131B2E',
+            cardBorder: '#233354',
+            busAddress: '#F59E0B', // Amber
+            busData: '#06B6D4',    // Cyan
+            busControl: '#EC4899', // Pink/Rose
+            cpuAccent: '#6366F1',  // Indigo
+            aluAccent: '#10B981',  // Emerald
+            cuAccent: '#8B5CF6',   // Purple
+            regAccent: '#3B82F6',  // Blue
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-border {
+        border: 1px solid #cbd5e1 !important;
+      }
+    }
+    
+    /* Flowing pulse animation for bus lines */
+    @keyframes pulseData {
+      0% { stroke-dashoffset: 40; }
+      100% { stroke-dashoffset: 0; }
+    }
+    .bus-stream {
+      stroke-dasharray: 6 6;
+      animation: pulseData 1.2s linear infinite;
+    }
+
+    /* Glow utility classes */
+    .glow-cyan {
+      box-shadow: 0 0 20px -2px rgba(6, 182, 212, 0.4);
+    }
+    .glow-amber {
+      box-shadow: 0 0 20px -2px rgba(245, 158, 11, 0.4);
+    }
+    .glow-indigo {
+      box-shadow: 0 0 25px -3px rgba(99, 102, 241, 0.35);
+    }
+    .active-highlight {
+      transform: scale(1.02);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    
+    /* Custom scrollbar for horizontal viewing */
+    ::-webkit-scrollbar {
+      height: 8px;
+      width: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #233354;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #3b82f6;
+    }
+  </style>
+</head>
+<body class="bg-[#0B0F19] text-slate-100 font-sans antialiased min-h-screen selection:bg-indigo-500 selection:text-white">
+
+  <header class="border-b border-cardBorder bg-[#0F172A]/90 sticky top-0 z-50 backdrop-blur-md px-4 sm:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-500 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">COA Revision Guide</span>
+          <span class="px-2 py-0.5 text-[10px] font-mono font-bold uppercase rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">Von Neumann Architecture</span>
+        </div>
+        <h1 class="text-lg sm:text-xl font-extrabold tracking-tight text-white flex items-center gap-2">
+          How an Instruction is Processed in a Computer
+        </h1>
+      </div>
+    </div>
+
+    <!-- Controls: Stepper, Mode switch, Print button -->
+    <div class="flex items-center gap-2 sm:gap-3 flex-wrap no-print">
+      <div class="bg-cardBg border border-cardBorder rounded-lg p-1 flex items-center text-xs font-medium">
+        <button id="btnStepPrev" onclick="prevStep()" class="px-2.5 py-1.5 rounded hover:bg-slate-700/60 disabled:opacity-30 disabled:cursor-not-allowed transition flex items-center gap-1">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          Prev
+        </button>
+        <span id="stepCounter" class="px-3 font-mono font-bold text-cyan-400">Step 1 / 10</span>
+        <button id="btnStepNext" onclick="nextStep()" class="px-2.5 py-1.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition flex items-center gap-1">
+          Next
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+        </button>
+        <button id="btnAutoPlay" onclick="toggleAutoPlay()" class="ml-1 px-2.5 py-1.5 rounded hover:bg-slate-700/60 text-slate-300 transition" title="Auto-advance steps">
+          <span id="autoPlayIcon">▶ Auto</span>
+        </button>
+      </div>
+
+      <button onclick="setMode('interactive')" id="modeInteractiveBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600/30 border border-indigo-500 text-indigo-200">
+        Walkthrough
+      </button>
+      <button onclick="setMode('all')" id="modeAllBtn" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-cardBg border border-cardBorder hover:border-slate-500 text-slate-300">
+        Full Panoramic View
+      </button>
+      <button onclick="window.print()" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+        Print / PDF
+      </button>
+    </div>
+  </header>
+
+  <main class="max-w-[1700px] mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- Concrete Instruction Case Study Banner -->
+    <section class="bg-gradient-to-r from-cardBg via-[#18233C] to-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl">
+      <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+        <div class="space-y-1">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span class="text-xs font-mono font-semibold uppercase tracking-wider text-emerald-400">Working Concrete Example</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-black text-white flex items-center gap-3">
+            Instruction: <span class="font-mono text-cyan-300 bg-cyan-950/70 border border-cyan-500/40 px-3 py-1 rounded-lg">ADD R1, R2</span>
+          </h2>
+          <p class="text-sm text-slate-400 max-w-2xl">
+            Tracing how the CPU executes an addition operation of two register contents: Register <code class="text-slate-200 font-mono">R1 = 10</code> and Register <code class="text-slate-200 font-mono">R2 = 20</code>, producing <code class="text-emerald-300 font-mono font-bold">30</code>.
+          </p>
+        </div>
+
+        <!-- Real-time Registers & Data Display -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
+          <div class="bg-slate-900/90 border border-cardBorder rounded-xl p-2.5 text-center min-w-[100px]">
+            <span class="text-[10px] uppercase font-mono text-slate-400 block">Register R1</span>
+            <span id="chipR1" class="text-lg font-mono font-bold text-cyan-400">10</span>
+            <span class="text-[9px] text-slate-500 block">Operand 1</span>
+          </div>
+          <div class="bg-slate-900/90 border border-cardBorder rounded-xl p-2.5 text-center min-w-[100px]">
+            <span class="text-[10px] uppercase font-mono text-slate-400 block">Register R2</span>
+            <span id="chipR2" class="text-lg font-mono font-bold text-cyan-400">20</span>
+            <span class="text-[9px] text-slate-500 block">Operand 2</span>
+          </div>
+          <div class="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-2.5 text-center min-w-[100px]">
+            <span class="text-[10px] uppercase font-mono text-emerald-400 block">ALU Output</span>
+            <span id="chipALU" class="text-lg font-mono font-bold text-emerald-300">10 + 20 = 30</span>
+            <span class="text-[9px] text-slate-500 block">Sum Computation</span>
+          </div>
+          <div class="bg-slate-900/90 border border-indigo-500/30 rounded-xl p-2.5 text-center min-w-[100px]">
+            <span class="text-[10px] uppercase font-mono text-indigo-400 block">Program Counter</span>
+            <span id="chipPC" class="text-lg font-mono font-bold text-indigo-300">0x0100</span>
+            <span class="text-[9px] text-slate-500 block">Next: <span id="chipNextPC">0x0101</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Current Step Interactive Banner -->
+      <div id="activeStepBox" class="mt-4 pt-4 border-t border-cardBorder/60 flex flex-col md:flex-row md:items-center justify-between gap-3 text-sm">
+        <div class="flex items-center gap-3">
+          <div id="stepBadge" class="px-3 py-1 rounded-full font-mono text-xs font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 whitespace-nowrap">
+            STEP 1 OF 10
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="cyclePhaseBadge" class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">FETCH PHASE</span>
+            <span id="stepTitle" class="font-bold text-white text-base">Program Counter (PC) holds instruction address 0x0100.</span>
+          </div>
+        </div>
+        <div id="stepDetail" class="text-slate-300 text-xs md:text-sm bg-slate-900/80 px-3.5 py-1.5 rounded-lg border border-slate-700/60 font-mono">
+          PC = 0x0100 points to memory location storing "ADD R1, R2"
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <!-- 1. Fetch -->
+      <div id="phaseCardFetch" class="p-3.5 rounded-xl border border-amber-500/30 bg-amber-950/20 transition-all duration-300">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-mono font-extrabold text-amber-400 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-[11px]">1</span>
+            FETCH
+          </span>
+          <span class="text-[10px] text-amber-400/80 font-mono">RAM → CPU (IR)</span>
+        </div>
+        <p class="text-xs text-slate-300">Fetch opcode from Memory address held in <strong>PC</strong> into <strong>Instruction Register</strong>.</p>
+        <div class="mt-2 text-[10px] font-mono text-amber-300/80 bg-amber-950/40 px-2 py-1 rounded">MAR ← PC; IR ← M[MAR]; PC++</div>
+      </div>
+
+      <!-- 2. Decode -->
+      <div id="phaseCardDecode" class="p-3.5 rounded-xl border border-purple-500/30 bg-purple-950/20 transition-all duration-300">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-mono font-extrabold text-purple-400 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-[11px]">2</span>
+            DECODE
+          </span>
+          <span class="text-[10px] text-purple-400/80 font-mono">Control Unit</span>
+        </div>
+        <p class="text-xs text-slate-300"><strong>Control Unit</strong> decodes opcode <code class="text-purple-300 font-mono">ADD</code> and identifies operand registers R1 and R2.</p>
+        <div class="mt-2 text-[10px] font-mono text-purple-300/80 bg-purple-950/40 px-2 py-1 rounded">CU signals: Read R1, R2; Prepare ALU</div>
+      </div>
+
+      <!-- 3. Execute -->
+      <div id="phaseCardExecute" class="p-3.5 rounded-xl border border-emerald-500/30 bg-emerald-950/20 transition-all duration-300">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-mono font-extrabold text-emerald-400 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-[11px]">3</span>
+            EXECUTE
+          </span>
+          <span class="text-[10px] text-emerald-400/80 font-mono">ALU Computation</span>
+        </div>
+        <p class="text-xs text-slate-300"><strong>ALU</strong> computes arithmetic addition: <span class="font-mono text-emerald-300">10 + 20 = 30</span> with status flag generation.</p>
+        <div class="mt-2 text-[10px] font-mono text-emerald-300/80 bg-emerald-950/40 px-2 py-1 rounded">ALU_OUT ← R1 + R2 (10 + 20 = 30)</div>
+      </div>
+
+      <!-- 4. Store / Writeback -->
+      <div id="phaseCardStore" class="p-3.5 rounded-xl border border-cyan-500/30 bg-cyan-950/20 transition-all duration-300">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-mono font-extrabold text-cyan-400 flex items-center gap-1.5">
+            <span class="w-5 h-5 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-[11px]">4</span>
+            STORE / WRITEBACK
+          </span>
+          <span class="text-[10px] text-cyan-400/80 font-mono">Registers / Output</span>
+        </div>
+        <p class="text-xs text-slate-300">Result <span class="font-mono text-cyan-300">30</span> written to target register <code class="text-cyan-300 font-mono">R1</code> & forwarded to output monitor.</p>
+        <div class="mt-2 text-[10px] font-mono text-cyan-300/80 bg-cyan-950/40 px-2 py-1 rounded">R1 ← 30; OutputBuffer ← 30</div>
+      </div>
+    </section>
+
+    <section class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-2xl relative overflow-hidden">
+      <!-- Watermark Badge -->
+      <div class="absolute -right-10 -bottom-10 opacity-5 pointer-events-none select-none">
+        <svg class="w-96 h-96 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M4 4h16v16H4V4zm2 2v12h12V6H6zm2 2h8v8H8V8z"/></svg>
+      </div>
+
+      <div class="flex items-center justify-between pb-4 border-b border-cardBorder/80 mb-6">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+            Hardware Architecture & System Bus Interconnect
+          </h3>
+          <p class="text-xs text-slate-400">Complete visual pathway connecting Input Devices, Memory (RAM), CPU Subsystems, and Output Devices.</p>
+        </div>
+
+        <!-- Bus Legend -->
+        <div class="flex items-center gap-4 text-xs font-mono">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-1.5 rounded bg-busAddress inline-block"></span>
+            <span class="text-amber-300 font-semibold">Address Bus (Unidirectional)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-1.5 rounded bg-busData inline-block"></span>
+            <span class="text-cyan-300 font-semibold">Data Bus (Bidirectional)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3.5 h-1.5 rounded bg-busControl inline-block"></span>
+            <span class="text-pink-400 font-semibold">Control Bus (Bidirectional)</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN LANDSCAPE ARCHITECTURAL GRID -->
+      <div class="grid grid-cols-12 gap-5 relative">
+
+        <div id="blockInput" class="col-span-12 lg:col-span-2 flex flex-col justify-between p-4 rounded-xl bg-slate-900/90 border-2 border-slate-700/80 transition-all duration-300">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Peripheral</span>
+              <span class="text-[11px] text-slate-400 font-mono">I/O Space</span>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-2 rounded-lg bg-slate-800 text-slate-200">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">INPUT DEVICE</h4>
+                <p class="text-[11px] text-slate-400 font-medium">Keyboard / Source</p>
+              </div>
+            </div>
+            <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-xs space-y-1.5">
+              <div class="text-[11px] text-slate-400 font-semibold">Analogy:</div>
+              <div class="text-xs text-indigo-300 font-medium font-mono">"Sends data into computer"</div>
+              <p class="text-[11px] text-slate-400 leading-relaxed pt-1">
+                Loads code & operands into RAM prior to execution via DMA or I/O controller.
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800/80 text-[11px] font-mono text-cyan-400 flex items-center justify-between">
+            <span>Input buffer:</span>
+            <span class="bg-cyan-950/80 px-1.5 py-0.5 rounded border border-cyan-800">ADD R1, R2</span>
+          </div>
+        </div>
+
+        <div id="blockMemory" class="col-span-12 lg:col-span-3 p-4 rounded-xl bg-slate-900/90 border-2 border-slate-700/80 transition-all duration-300 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase font-bold text-amber-400 bg-amber-950/60 border border-amber-600/30 px-2 py-0.5 rounded">Main Storage</span>
+              <span class="text-[11px] text-slate-400 font-mono">Volatile / Fast</span>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-2 rounded-lg bg-amber-950/50 border border-amber-600/30 text-amber-400">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">MEMORY (RAM)</h4>
+                <p class="text-[11px] text-slate-400 font-medium">Stores data & instructions</p>
+              </div>
+            </div>
+
+            <!-- Memory Cells Representation -->
+            <div class="mt-3 space-y-1.5 font-mono text-xs">
+              <div id="memCell0" class="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between transition-all">
+                <span class="text-amber-400 text-[11px]">0x00FE:</span>
+                <span class="text-slate-500 text-[11px]">Data: [10, 20]</span>
+              </div>
+              <div id="memCell1" class="p-2 rounded-lg bg-cyan-950/40 border border-cyan-500/40 flex items-center justify-between shadow-sm transition-all">
+                <span class="text-amber-400 font-bold text-[11px]">0x0100:</span>
+                <span class="text-cyan-300 font-bold text-[11px]">ADD R1, R2</span>
+                <span class="text-[9px] bg-cyan-900/60 px-1 py-0.5 rounded text-cyan-200">OPCODE</span>
+              </div>
+              <div id="memCell2" class="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between transition-all">
+                <span class="text-amber-400 text-[11px]">0x0101:</span>
+                <span class="text-slate-400 text-[11px]">MOV [OUT], R1</span>
+              </div>
+              <div id="memCell3" class="p-2 rounded-lg bg-slate-950/80 border border-slate-800 flex items-center justify-between transition-all">
+                <span class="text-amber-400 text-[11px]">0x0102:</span>
+                <span class="text-slate-400 text-[11px]">HALT</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-400 flex items-center justify-between">
+            <span class="font-mono">Read/Write Cycle:</span>
+            <span id="memStatus" class="font-mono text-emerald-400 font-bold">READY (WAIT)</span>
+          </div>
+        </div>
+
+        <div id="blockCPU" class="col-span-12 lg:col-span-5 p-5 rounded-2xl bg-gradient-to-b from-[#141E33] to-[#0F1626] border-2 border-indigo-500/60 shadow-2xl relative">
+          <!-- CPU Header Badge -->
+          <div class="flex items-center justify-between pb-3 border-b border-indigo-500/30 mb-4">
+            <div class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></span>
+              <div>
+                <h4 class="text-base font-extrabold text-white tracking-wide">CENTRAL PROCESSING UNIT (CPU)</h4>
+                <p class="text-xs text-indigo-300 font-medium">"Brain of computer" — Executes instructions via electronic circuits</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-mono font-bold bg-indigo-950 px-2.5 py-1 rounded border border-indigo-500/40 text-indigo-300 uppercase">
+              Microprocessor Core
+            </span>
+          </div>
+
+          <!-- Internal CPU Components: CU, Registers, ALU Grid -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+
+            <!-- 1. Control Unit (CU) -->
+            <div id="subBlockCU" class="p-3.5 rounded-xl bg-purple-950/30 border border-purple-500/40 flex flex-col justify-between transition-all">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[10px] font-mono font-bold uppercase text-purple-400">Component 1</span>
+                  <span class="text-xs">🕹️</span>
+                </div>
+                <h5 class="text-xs font-bold text-white uppercase tracking-wider">Control Unit (CU)</h5>
+                <p class="text-[10px] text-purple-300 font-mono mt-0.5">Role: The "Manager"</p>
+                <p class="text-[11px] text-slate-300 mt-2 leading-tight">
+                  Decodes instructions, orchestrates micro-operations, and generates timing pulses across buses.
+                </p>
+                
+                <div class="mt-3 bg-purple-950/70 border border-purple-800/60 p-2 rounded text-[10px] font-mono space-y-1">
+                  <div class="text-slate-400">Current Opcode:</div>
+                  <div id="cuDecoder" class="text-purple-300 font-bold">ADD [0010]</div>
+                  <div class="text-slate-400 pt-1">Signals:</div>
+                  <div id="cuSignals" class="text-emerald-400">ALU_ADD_EN, REG_WR</div>
+                </div>
+              </div>
+              <div class="mt-2 text-[9px] text-purple-400/80 font-mono text-center">Timing & Control Logic</div>
+            </div>
+
+            <!-- 2. Registers File -->
+            <div id="subBlockRegs" class="p-3.5 rounded-xl bg-blue-950/30 border border-blue-500/40 flex flex-col justify-between transition-all">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[10px] font-mono font-bold uppercase text-blue-400">Component 2</span>
+                  <span class="text-xs">⚡</span>
+                </div>
+                <h5 class="text-xs font-bold text-white uppercase tracking-wider">REGISTERS</h5>
+                <p class="text-[10px] text-blue-300 font-mono mt-0.5">Role: "Fast Temporary Storage"</p>
+                <p class="text-[11px] text-slate-300 mt-2 leading-tight">
+                  High-speed internal flip-flop memory cells accessed within 1 clock cycle.
+                </p>
+
+                <!-- Key Registers Stack -->
+                <div class="mt-2.5 space-y-1.5 font-mono text-[11px]">
+                  <div id="regPC" class="p-1.5 rounded bg-slate-900 border border-blue-800 flex justify-between">
+                    <span class="text-slate-400">PC:</span>
+                    <span class="text-amber-400 font-bold">0x0100</span>
+                  </div>
+                  <div id="regIR" class="p-1.5 rounded bg-slate-900 border border-blue-800 flex justify-between">
+                    <span class="text-slate-400">IR:</span>
+                    <span class="text-cyan-400 font-bold">ADD R1, R2</span>
+                  </div>
+                  <div id="regR1" class="p-1.5 rounded bg-slate-900 border border-blue-800 flex justify-between">
+                    <span class="text-slate-400">R1:</span>
+                    <span class="text-emerald-400 font-bold">10</span>
+                  </div>
+                  <div id="regR2" class="p-1.5 rounded bg-slate-900 border border-blue-800 flex justify-between">
+                    <span class="text-slate-400">R2:</span>
+                    <span class="text-emerald-400 font-bold">20</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-2 text-[9px] text-blue-400/80 font-mono text-center">Registers: MAR, MDR, PC, IR, R1, R2</div>
+            </div>
+
+            <!-- 3. Arithmetic Logic Unit (ALU) -->
+            <div id="subBlockALU" class="p-3.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 flex flex-col justify-between transition-all">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-[10px] font-mono font-bold uppercase text-emerald-400">Component 3</span>
+                  <span class="text-xs">🧮</span>
+                </div>
+                <h5 class="text-xs font-bold text-white uppercase tracking-wider">ALU</h5>
+                <p class="text-[10px] text-emerald-300 font-mono mt-0.5">Role: "The Calculator"</p>
+                <p class="text-[11px] text-slate-300 mt-2 leading-tight">
+                  Executes mathematical (ADD, SUB) and logical operations (AND, OR, NOT).
+                </p>
+
+                <!-- ALU Operation Diagram -->
+                <div class="mt-3 bg-emerald-950/70 border border-emerald-800/60 p-2 rounded text-[10px] font-mono space-y-1.5">
+                  <div class="flex justify-between border-b border-emerald-900/60 pb-1">
+                    <span class="text-slate-400">Input A:</span>
+                    <span id="aluInA" class="text-cyan-300 font-bold">10 (from R1)</span>
+                  </div>
+                  <div class="flex justify-between border-b border-emerald-900/60 pb-1">
+                    <span class="text-slate-400">Input B:</span>
+                    <span id="aluInB" class="text-cyan-300 font-bold">20 (from R2)</span>
+                  </div>
+                  <div class="flex justify-between border-b border-emerald-900/60 pb-1">
+                    <span class="text-emerald-400">OP:</span>
+                    <span class="text-white font-bold">ADD (+)</span>
+                  </div>
+                  <div class="flex justify-between pt-0.5 text-xs">
+                    <span class="text-emerald-300 font-bold">RESULT:</span>
+                    <span id="aluOut" class="text-emerald-300 font-black">30</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-2 text-[9px] text-emerald-400/80 font-mono text-center">Status Flags: Z=0, C=0, S=0</div>
+            </div>
+
+          </div>
+
+          <!-- Internal CPU Bus Ribbon -->
+          <div class="mt-4 pt-3 border-t border-indigo-500/20 flex items-center justify-between text-[11px] font-mono text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+              Internal Data Path
+            </span>
+            <span class="text-indigo-300">Clock: 3.2 GHz | Synchronous Step Cycle</span>
+          </div>
+        </div>
+
+        <div id="blockOutput" class="col-span-12 lg:col-span-2 flex flex-col justify-between p-4 rounded-xl bg-slate-900/90 border-2 border-slate-700/80 transition-all duration-300">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <span class="text-[10px] font-mono uppercase font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded">Peripheral</span>
+              <span class="text-[11px] text-slate-400 font-mono">Display</span>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <div class="p-2 rounded-lg bg-slate-800 text-slate-200">
+                <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">OUTPUT DEVICE</h4>
+                <p class="text-[11px] text-slate-400 font-medium">Shows result to user</p>
+              </div>
+            </div>
+            
+            <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 text-xs space-y-1.5">
+              <div class="text-[11px] text-slate-400 font-semibold">Analogy:</div>
+              <div class="text-xs text-emerald-300 font-medium font-mono">"Shows result"</div>
+              <p class="text-[11px] text-slate-400 leading-relaxed pt-1">
+                Receives processed data from memory or CPU registers for visual rendering.
+              </p>
+            </div>
+          </div>
+
+          <!-- Virtual Screen Output -->
+          <div class="mt-4 pt-3 border-t border-slate-800/80">
+            <div class="text-[10px] uppercase font-mono text-slate-400 mb-1">Terminal Screen:</div>
+            <div class="p-2.5 rounded-lg bg-black border border-emerald-900/60 font-mono text-xs">
+              <span class="text-slate-500">$ run add.bin</span><br>
+              <span class="text-emerald-400 font-bold" id="terminalOutput">&gt; Output: 30</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="mt-6 pt-5 border-t border-cardBorder">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <span>THE SYSTEM BUS — "COMMUNICATION HIGHWAY"</span>
+          </h4>
+          <span class="text-[11px] font-mono text-slate-400">Wires connecting CPU, Memory, and I/O</span>
+        </div>
+
+        <!-- SVG Bus Highway Diagram -->
+        <div class="w-full bg-slate-950/70 border border-slate-800/80 rounded-xl p-3 overflow-x-auto">
+          <svg class="w-full min-w-[760px] h-28" viewBox="0 0 1000 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- 1. ADDRESS BUS (Amber, Unidirectional CPU -> RAM/IO) -->
+            <g id="svgAddressBus">
+              <line x1="100" y1="25" x2="900" y2="25" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+              <line id="activeAddrLine" x1="100" y1="25" x2="900" y2="25" stroke="#F59E0B" stroke-width="4" stroke-linecap="round" class="bus-stream" opacity="0.9"/>
+              <rect x="20" y="16" width="70" height="18" rx="4" fill="#78350F" stroke="#F59E0B" stroke-width="1"/>
+              <text x="55" y="29" fill="#FDE68A" font-size="9" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">ADDRESS BUS</text>
+              <polygon points="902,25 894,20 894,30" fill="#F59E0B" />
+              <!-- Taps to components -->
+              <line x1="220" y1="25" x2="220" y2="6" stroke="#F59E0B" stroke-width="2" stroke-dasharray="2 2" />
+              <line x1="380" y1="25" x2="380" y2="6" stroke="#F59E0B" stroke-width="2" stroke-dasharray="2 2" />
+              <line x1="650" y1="25" x2="650" y2="6" stroke="#F59E0B" stroke-width="2" stroke-dasharray="2 2" />
+              <text x="500" y="18" fill="#F59E0B" font-size="9" font-family="JetBrains Mono" text-anchor="middle">Carries 16/32/64-bit Memory Addresses (e.g. 0x0100) — UNIDIRECTIONAL [CPU → RAM]</text>
+            </g>
+
+            <!-- 2. DATA BUS (Cyan, Bidirectional) -->
+            <g id="svgDataBus">
+              <line x1="100" y1="58" x2="900" y2="58" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+              <line id="activeDataLine" x1="100" y1="58" x2="900" y2="58" stroke="#06B6D4" stroke-width="4" stroke-linecap="round" class="bus-stream" opacity="0.9"/>
+              <rect x="20" y="49" width="70" height="18" rx="4" fill="#164E63" stroke="#06B6D4" stroke-width="1"/>
+              <text x="55" y="62" fill="#CFFAFE" font-size="9" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">DATA BUS</text>
+              <polygon points="98,58 106,53 106,63" fill="#06B6D4" />
+              <polygon points="902,58 894,53 894,63" fill="#06B6D4" />
+              <text x="500" y="52" fill="#06B6D4" font-size="9" font-family="JetBrains Mono" text-anchor="middle">Carries Instructions & Operands (e.g. "ADD R1, R2", data 10, 20, 30) — BIDIRECTIONAL</text>
+            </g>
+
+            <!-- 3. CONTROL BUS (Pink, Bidirectional Control Lines) -->
+            <g id="svgControlBus">
+              <line x1="100" y1="92" x2="900" y2="92" stroke="#EC4899" stroke-width="4" stroke-linecap="round" opacity="0.4"/>
+              <line id="activeCtrlLine" x1="100" y1="92" x2="900" y2="92" stroke="#EC4899" stroke-width="4" stroke-linecap="round" class="bus-stream" opacity="0.9"/>
+              <rect x="20" y="83" width="70" height="18" rx="4" fill="#831843" stroke="#EC4899" stroke-width="1"/>
+              <text x="55" y="96" fill="#FCE7F3" font-size="9" font-family="JetBrains Mono" font-weight="bold" text-anchor="middle">CONTROL BUS</text>
+              <polygon points="98,92 106,87 106,97" fill="#EC4899" />
+              <polygon points="902,92 894,87 894,97" fill="#EC4899" />
+              <text x="500" y="86" fill="#EC4899" font-size="9" font-family="JetBrains Mono" text-anchor="middle">Carries Control Signals: MEMORY READ, MEMORY WRITE, CLOCK, BUS REQUEST, INTERRUPTS</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <section class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-cardBorder/80 mb-5 gap-2">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase">Step-by-Step Breakdown</span>
+            <span class="text-xs text-slate-400">Exam Revision Walkthrough</span>
+          </div>
+          <h3 class="text-lg font-bold text-white mt-1">Detailed 10-Step Visual Sequence: ADD R1, R2</h3>
+        </div>
+        <div class="text-xs text-slate-400 font-mono">
+          Click any step card below to jump to that moment
+        </div>
+      </div>
+
+      <!-- Step Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3" id="stepsCardsGrid">
+
+        <!-- Step 1 -->
+        <div onclick="goToStep(0)" id="cardStep0" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-indigo-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">STEP 01</span>
+              <span class="text-amber-400 text-[10px]">FETCH</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">PC Holds Address</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Program Counter (PC) stores <code class="text-amber-300 font-mono">0x0100</code>, pointing to the next instruction in RAM.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-indigo-400">PC = 0x0100</div>
+        </div>
+
+        <!-- Step 2 -->
+        <div onclick="goToStep(1)" id="cardStep1" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-amber-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">STEP 02</span>
+              <span class="text-amber-400 text-[10px]">ADDRESS BUS</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">Send Address via Bus</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              CPU sends <code class="text-amber-300 font-mono">0x0100</code> through Address Bus to RAM, accompanied by a MEMORY_READ signal.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-amber-400">AddrBus ← 0x0100</div>
+        </div>
+
+        <!-- Step 3 -->
+        <div onclick="goToStep(2)" id="cardStep2" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-cyan-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">STEP 03</span>
+              <span class="text-cyan-400 text-[10px]">DATA BUS</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">RAM Sends Instruction</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              RAM retrieves instruction <code class="text-cyan-300 font-mono">ADD R1, R2</code> from cell 0x0100 and places it on Data Bus.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-cyan-400">DataBus ← ADD R1, R2</div>
+        </div>
+
+        <!-- Step 4 -->
+        <div onclick="goToStep(3)" id="cardStep3" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-blue-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">STEP 04</span>
+              <span class="text-blue-400 text-[10px]">FETCH COMPLETE</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">Loaded into IR</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Instruction arrives at CPU and is loaded into the <strong>Instruction Register (IR)</strong> for processing.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-blue-400">IR ← "ADD R1, R2"</div>
+        </div>
+
+        <!-- Step 5 -->
+        <div onclick="goToStep(4)" id="cardStep4" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-purple-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 font-bold">STEP 05</span>
+              <span class="text-purple-400 text-[10px]">DECODE</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">CU Decodes Opcode</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Control Unit decodes <code class="text-purple-300 font-mono">ADD</code> opcode. It identifies operation: addition of registers R1 and R2.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-purple-400">CU: Operation = ADD</div>
+        </div>
+
+        <!-- Step 6 -->
+        <div onclick="goToStep(5)" id="cardStep5" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-blue-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-bold">STEP 06</span>
+              <span class="text-blue-400 text-[10px]">OPERAND FETCH</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">Registers Provide Data</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Register File outputs <code class="text-cyan-300 font-mono">R1 = 10</code> and <code class="text-cyan-300 font-mono">R2 = 20</code> to ALU input latches.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-blue-400">ALU_A=10, ALU_B=20</div>
+        </div>
+
+        <!-- Step 7 -->
+        <div onclick="goToStep(6)" id="cardStep6" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-emerald-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">STEP 07</span>
+              <span class="text-emerald-400 text-[10px]">EXECUTE</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">ALU Computes 10 + 20</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              ALU adder circuit executes addition: <span class="text-emerald-300 font-bold font-mono">10 + 20 = 30</span> and sets status flags.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-emerald-400">ALU Result = 30</div>
+        </div>
+
+        <!-- Step 8 -->
+        <div onclick="goToStep(7)" id="cardStep7" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-cyan-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-bold">STEP 08</span>
+              <span class="text-cyan-400 text-[10px]">STORE / WRITE</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">Result Stored in R1</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Output value <code class="text-cyan-300 font-mono">30</code> is written back into destination register <code class="text-cyan-300 font-mono">R1</code> (or accumulator).
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-cyan-400">R1 ← 30 (Updated)</div>
+        </div>
+
+        <!-- Step 9 -->
+        <div onclick="goToStep(8)" id="cardStep8" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-emerald-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">STEP 09</span>
+              <span class="text-emerald-400 text-[10px]">OUTPUT</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">Display to Output</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              CPU sends the computed result via I/O bus to Output Device (Monitor/Screen) showing <code class="text-emerald-300 font-mono">30</code>.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-emerald-400">Output: 30</div>
+        </div>
+
+        <!-- Step 10 -->
+        <div onclick="goToStep(9)" id="cardStep9" class="cursor-pointer p-3.5 rounded-xl border border-cardBorder bg-slate-900/80 hover:border-indigo-500 transition-all flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between text-[11px] font-mono mb-2">
+              <span class="px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-bold">STEP 10</span>
+              <span class="text-indigo-400 text-[10px]">NEXT CYCLE</span>
+            </div>
+            <h5 class="text-xs font-bold text-white mb-1">PC Incremented (PC+1)</h5>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              Program counter increments to <code class="text-indigo-300 font-mono">0x0101</code>. Cycle starts over for the next instruction.
+            </p>
+          </div>
+          <div class="mt-3 pt-2 border-t border-slate-800 text-[10px] font-mono text-indigo-400">PC ← 0x0101</div>
+        </div>
+
+      </div>
+    </section>
+
+    <section>
+      <div class="mb-3 flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-white flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+            Exam Quick-Revision Cheat Sheet — Fundamental Component Roles
+          </h3>
+          <p class="text-xs text-slate-400">Standard definitions and mnemonics required for Computer Organization & Architecture examinations.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+
+        <!-- CPU -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-indigo-500/60 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-indigo-400">CENTRAL PROCESSING UNIT</span>
+            <span class="text-base">🧠</span>
+          </div>
+          <div class="text-sm font-bold text-white">CPU = "Brain of Computer"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            The core primary hardware unit containing CU, Registers, and ALU that sequentially fetches, decodes, and executes software instructions.
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-indigo-300 bg-indigo-950/40 p-1.5 rounded border border-indigo-900/60">
+            Speed: GHz (Gigahertz) | Clock cycles
+          </div>
+        </div>
+
+        <!-- Control Unit -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-purple-500/60 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-purple-400">CONTROL UNIT (CU)</span>
+            <span class="text-base">👔</span>
+          </div>
+          <div class="text-sm font-bold text-white">CU = "The Manager"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Controls and coordinates all operations within the CPU, Memory, and I/O. Decodes opcodes and issues micro-control timing signals.
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-purple-300 bg-purple-950/40 p-1.5 rounded border border-purple-900/60">
+            Hardwired or Microprogrammed logic
+          </div>
+        </div>
+
+        <!-- Registers -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-blue-500/60 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-blue-400">REGISTERS</span>
+            <span class="text-base">⚡</span>
+          </div>
+          <div class="text-sm font-bold text-white">Registers = "Fast Temporary Storage"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Smallest, fastest memory located directly inside the CPU core. Operates at CPU clock speed with zero wait states (PC, IR, MAR, MDR, General Regs).
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-blue-300 bg-blue-950/40 p-1.5 rounded border border-blue-900/60">
+            Access latency: &lt; 1 nanosecond
+          </div>
+        </div>
+
+        <!-- ALU -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-emerald-500/60 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-emerald-400">ALU</span>
+            <span class="text-base">🧮</span>
+          </div>
+          <div class="text-sm font-bold text-white">ALU = "The Calculator"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Carries out arithmetic operations (Addition, Subtraction, Multiplication) and boolean logic evaluations (AND, OR, XOR, Inversion, Shift).
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-emerald-300 bg-emerald-950/40 p-1.5 rounded border border-emerald-900/60">
+            Outputs condition flags: Zero, Carry, Sign
+          </div>
+        </div>
+
+        <!-- Memory (RAM) -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-amber-500/60 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-amber-400">PRIMARY MEMORY (RAM)</span>
+            <span class="text-base">📦</span>
+          </div>
+          <div class="text-sm font-bold text-white">Memory = "Stores Data & Code"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Stores active programs and currently running data instructions with linearly addressable byte locations (Volatile DRAM).
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-amber-300 bg-amber-950/40 p-1.5 rounded border border-amber-900/60">
+            Addressed by MAR, transfers via MDR
+          </div>
+        </div>
+
+        <!-- System Bus -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-cyan-500/60 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-cyan-400">SYSTEM BUS</span>
+            <span class="text-base">🛣️</span>
+          </div>
+          <div class="text-sm font-bold text-white">Bus = "Communication Highway"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Shared physical transmission lines: <strong>Address Bus</strong> (where to look), <strong>Data Bus</strong> (what to read/write), <strong>Control Bus</strong> (how/when to act).
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-cyan-300 bg-cyan-950/40 p-1.5 rounded border border-cyan-900/60">
+            Address (Uni) | Data & Ctrl (Bi)
+          </div>
+        </div>
+
+        <!-- Input Device -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-slate-500 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-slate-400">INPUT DEVICE</span>
+            <span class="text-base">⌨️</span>
+          </div>
+          <div class="text-sm font-bold text-white">Input = "Sends Data In"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Translates human-readable commands or sensor signals into binary machine code and stores them into RAM via I/O interfaces.
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-slate-300 bg-slate-900 p-1.5 rounded border border-slate-800">
+            Keyboard, Mouse, Network Port, Disk
+          </div>
+        </div>
+
+        <!-- Output Device -->
+        <div class="p-4 rounded-xl bg-cardBg border border-cardBorder hover:border-slate-500 transition group">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-mono font-bold text-slate-400">OUTPUT DEVICE</span>
+            <span class="text-base">🖥️</span>
+          </div>
+          <div class="text-sm font-bold text-white">Output = "Shows Result"</div>
+          <p class="text-xs text-slate-400 mt-2 leading-relaxed">
+            Converts processed binary bits from CPU/Memory into human-perceptible visual, audio, or persistent physical form.
+          </p>
+          <div class="mt-3 text-[10px] font-mono text-slate-300 bg-slate-900 p-1.5 rounded border border-slate-800">
+            Display, Audio speaker, Printer
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="bg-cardBg border border-cardBorder rounded-2xl p-5 shadow-xl">
+      <h3 class="text-base font-bold text-white mb-3 flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-pink-500"></span>
+        Bus Architecture Comparison Matrix (High-Yield COA Topic)
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs font-mono">
+          <thead class="bg-slate-900 text-slate-300 border-b border-cardBorder uppercase text-[10px]">
+            <tr>
+              <th class="p-3">Bus Type</th>
+              <th class="p-3">Direction</th>
+              <th class="p-3">Function / Payload</th>
+              <th class="p-3">In Our Example (ADD R1, R2)</th>
+              <th class="p-3">Key Metric</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-cardBorder/60 text-slate-300">
+            <tr class="hover:bg-slate-900/50">
+              <td class="p-3 font-bold text-busAddress flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-busAddress"></span>
+                Address Bus
+              </td>
+              <td class="p-3 text-amber-300 font-semibold">Unidirectional (CPU → RAM / I/O)</td>
+              <td class="p-3">Carries binary memory addresses indicating which cell to read or write.</td>
+              <td class="p-3 text-amber-200">Transmits <code class="bg-amber-950/80 px-1 py-0.5 rounded">0x0100</code> to RAM</td>
+              <td class="p-3">Width determines Max RAM capacity ($2^N$)</td>
+            </tr>
+            <tr class="hover:bg-slate-900/50">
+              <td class="p-3 font-bold text-busData flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-busData"></span>
+                Data Bus
+              </td>
+              <td class="p-3 text-cyan-300 font-semibold">Bidirectional (CPU ⇄ RAM ⇄ I/O)</td>
+              <td class="p-3">Carries actual instructions, variables, and numerical computed operands.</td>
+              <td class="p-3 text-cyan-200">Transfers instruction word <code class="bg-cyan-950/80 px-1 py-0.5 rounded">"ADD R1, R2"</code> to IR</td>
+              <td class="p-3">Width determines Word Size (32-bit / 64-bit)</td>
+            </tr>
+            <tr class="hover:bg-slate-900/50">
+              <td class="p-3 font-bold text-busControl flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-busControl"></span>
+                Control Bus
+              </td>
+              <td class="p-3 text-pink-400 font-semibold">Bidirectional (Individual dedicated lines)</td>
+              <td class="p-3">Carries read/write strobes, clock signals, interrupts, and bus acknowledgements.</td>
+              <td class="p-3 text-pink-300">Sends <code class="bg-pink-950/80 px-1 py-0.5 rounded">MEM_READ = 1</code>, then enables ALU latch</td>
+              <td class="p-3">Controls synchronization & bus arbitration</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer Notes -->
+    <footer class="text-center text-xs text-slate-500 py-4 font-mono">
+      Computer Organization & Architecture Infographic • Master Instruction Cycle: Fetch → Decode → Execute → Store • Printable Revision Material
+    </footer>
+
+  </main>
+
+  <script>
+    // State of the application
+    let currentStep = 0;
+    let autoPlayTimer = null;
+    let isAutoPlaying = false;
+    let activeMode = 'interactive'; // 'interactive' or 'all'
+
+    // The 10 distinct steps with visual highlights and text annotations
+    const stepDefinitions = [
+      {
+        stepNum: 1,
+        phase: "FETCH PHASE",
+        phaseColor: "amber",
+        phaseCard: "phaseCardFetch",
+        title: "PC contains the address of the next instruction.",
+        detail: "Program Counter (PC) = 0x0100 points to memory address of 'ADD R1, R2'",
+        highlightBlocks: ["subBlockRegs", "regPC"],
+        activeBus: "none",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "EMPTY / PREV",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "IDLE",
+        termOut: "> Ready...",
+        memStatus: "IDLE"
+      },
+      {
+        stepNum: 2,
+        phase: "FETCH PHASE",
+        phaseColor: "amber",
+        phaseCard: "phaseCardFetch",
+        title: "CPU sends the address to Memory through Address Bus.",
+        detail: "Address 0x0100 placed on Address Bus along with Control Signal (READ=1)",
+        highlightBlocks: ["blockMemory", "subBlockRegs"],
+        activeBus: "address",
+        activeMemCell: "memCell1",
+        pcVal: "0x0100",
+        irVal: "WAITING",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "IDLE",
+        termOut: "> Fetching opcode at 0x0100...",
+        memStatus: "READING (0x0100)"
+      },
+      {
+        stepNum: 3,
+        phase: "FETCH PHASE",
+        phaseColor: "cyan",
+        phaseCard: "phaseCardFetch",
+        title: "Memory sends 'ADD R1, R2' back through Data Bus.",
+        detail: "RAM cell 0x0100 asserts 'ADD R1, R2' on Data Bus back to CPU",
+        highlightBlocks: ["blockMemory"],
+        activeBus: "data",
+        activeMemCell: "memCell1",
+        pcVal: "0x0100",
+        irVal: "IN-TRANSIT",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "IDLE",
+        termOut: "> Data Bus asserting: ADD R1, R2",
+        memStatus: "DATA TRANSMITTING"
+      },
+      {
+        stepNum: 4,
+        phase: "FETCH PHASE",
+        phaseColor: "blue",
+        phaseCard: "phaseCardFetch",
+        title: "Instruction goes into Instruction Register (IR).",
+        detail: "Instruction Register (IR) latches 'ADD R1, R2'. Fetch Phase is complete!",
+        highlightBlocks: ["subBlockRegs", "regIR"],
+        activeBus: "none",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "ADD R1, R2",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "IDLE",
+        termOut: "> IR loaded with ADD R1, R2",
+        memStatus: "READY"
+      },
+      {
+        stepNum: 5,
+        phase: "DECODE PHASE",
+        phaseColor: "purple",
+        phaseCard: "phaseCardDecode",
+        title: "Control Unit decodes the instruction.",
+        detail: "CU decodes operation = ADD, source operand = R2, destination/operand = R1",
+        highlightBlocks: ["subBlockCU"],
+        activeBus: "control",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "ADD R1, R2",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "PREPARE ADD",
+        termOut: "> CU Decoded: ADD operation between R1 and R2",
+        memStatus: "IDLE"
+      },
+      {
+        stepNum: 6,
+        phase: "OPERAND PHASE",
+        phaseColor: "blue",
+        phaseCard: "phaseCardDecode",
+        title: "Registers provide R1 = 10 and R2 = 20.",
+        detail: "Registers R1 & R2 transfer operands 10 and 20 into ALU input latch lines",
+        highlightBlocks: ["subBlockRegs", "regR1", "regR2", "subBlockALU"],
+        activeBus: "none",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "ADD R1, R2",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "10 + 20",
+        termOut: "> Operands loaded: A=10, B=20",
+        memStatus: "IDLE"
+      },
+      {
+        stepNum: 7,
+        phase: "EXECUTE PHASE",
+        phaseColor: "emerald",
+        phaseCard: "phaseCardExecute",
+        title: "ALU performs arithmetic: 10 + 20 = 30.",
+        detail: "Arithmetic Logic Unit adds inputs: 10 + 20 = 30. Zero & carry flags evaluated.",
+        highlightBlocks: ["subBlockALU"],
+        activeBus: "none",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "ADD R1, R2",
+        r1Val: "10",
+        r2Val: "20",
+        aluVal: "RESULT = 30",
+        termOut: "> ALU computation: 10 + 20 = 30",
+        memStatus: "IDLE"
+      },
+      {
+        stepNum: 8,
+        phase: "STORE PHASE",
+        phaseColor: "cyan",
+        phaseCard: "phaseCardStore",
+        title: "Result 30 is stored in register R1.",
+        detail: "Write-back stage: Result 30 is committed to Register R1 (overwriting 10).",
+        highlightBlocks: ["subBlockRegs", "regR1"],
+        activeBus: "none",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "ADD R1, R2",
+        r1Val: "30",
+        r2Val: "20",
+        aluVal: "COMPLETED",
+        termOut: "> Register R1 updated to 30",
+        memStatus: "IDLE"
+      },
+      {
+        stepNum: 9,
+        phase: "OUTPUT PHASE",
+        phaseColor: "emerald",
+        phaseCard: "phaseCardStore",
+        title: "Output device displays the result: 30.",
+        detail: "CPU routes result to Output interface for rendering on user monitor screen.",
+        highlightBlocks: ["blockOutput"],
+        activeBus: "data",
+        activeMemCell: null,
+        pcVal: "0x0100",
+        irVal: "ADD R1, R2",
+        r1Val: "30",
+        r2Val: "20",
+        aluVal: "COMPLETED",
+        termOut: "> Output: 30",
+        memStatus: "IDLE"
+      },
+      {
+        stepNum: 10,
+        phase: "NEXT INSTRUCTION",
+        phaseColor: "indigo",
+        phaseCard: "phaseCardFetch",
+        title: "CPU moves to the next instruction (PC incremented).",
+        detail: "PC increments from 0x0100 to 0x0101. Ready for the next fetch cycle!",
+        highlightBlocks: ["subBlockRegs", "regPC"],
+        activeBus: "none",
+        activeMemCell: "memCell2",
+        pcVal: "0x0101",
+        irVal: "NEXT OPCODE",
+        r1Val: "30",
+        r2Val: "20",
+        aluVal: "STANDBY",
+        termOut: "> Cycle complete. Ready for 0x0101.",
+        memStatus: "IDLE (NEXT)"
+      }
+    ];
+
+    function renderStep() {
+      const step = stepDefinitions[currentStep];
+
+      // Update Header Badges and detail texts
+      document.getElementById('stepCounter').innerText = `Step ${currentStep + 1} / 10`;
+      document.getElementById('stepBadge').innerText = `STEP ${step.stepNum} OF 10`;
+      document.getElementById('cyclePhaseBadge').innerText = step.phase;
+      document.getElementById('stepTitle').innerText = step.title;
+      document.getElementById('stepDetail').innerText = step.detail;
+
+      // Update Chips
+      document.getElementById('chipR1').innerText = step.r1Val;
+      document.getElementById('chipR2').innerText = step.r2Val;
+      document.getElementById('chipPC').innerText = step.pcVal;
+      document.getElementById('chipNextPC').innerText = (step.stepNum === 10) ? "0x0102" : "0x0101";
+
+      // Update Register inner elements
+      document.querySelector('#regPC span:last-child').innerText = step.pcVal;
+      document.querySelector('#regIR span:last-child').innerText = step.irVal;
+      document.querySelector('#regR1 span:last-child').innerText = step.r1Val;
+      document.querySelector('#regR2 span:last-child').innerText = step.r2Val;
+      document.getElementById('aluOut').innerText = (step.stepNum >= 7) ? "30" : "---";
+      document.getElementById('terminalOutput').innerText = step.termOut;
+      document.getElementById('memStatus').innerText = step.memStatus;
+
+      // Update Prev / Next buttons state
+      document.getElementById('btnStepPrev').disabled = (currentStep === 0);
+      document.getElementById('btnStepNext').disabled = (currentStep === stepDefinitions.length - 1);
+
+      // Reset all interactive cards
+      for (let i = 0; i < 10; i++) {
+        const card = document.getElementById(`cardStep${i}`);
+        if (card) {
+          if (i === currentStep) {
+            card.classList.add('border-indigo-400', 'bg-slate-800', 'glow-indigo');
+            card.classList.remove('border-cardBorder', 'bg-slate-900/80');
+          } else {
+            card.classList.remove('border-indigo-400', 'bg-slate-800', 'glow-indigo');
+            card.classList.add('border-cardBorder', 'bg-slate-900/80');
+          }
+        }
+      }
+
+      // Reset all 4 Phase Summary Cards
+      const phases = ['phaseCardFetch', 'phaseCardDecode', 'phaseCardExecute', 'phaseCardStore'];
+      phases.forEach(p => {
+        const el = document.getElementById(p);
+        if (el) el.classList.remove('ring-2', 'ring-white', 'scale-105');
+      });
+      const activePhaseEl = document.getElementById(step.phaseCard);
+      if (activePhaseEl) {
+        activePhaseEl.classList.add('ring-2', 'ring-white', 'scale-105');
+      }
+
+      // Bus line dynamic glow highlights
+      const addrLine = document.getElementById('activeAddrLine');
+      const dataLine = document.getElementById('activeDataLine');
+      const ctrlLine = document.getElementById('activeCtrlLine');
+
+      if (step.activeBus === 'address') {
+        addrLine.setAttribute('stroke', '#FBBF24');
+        addrLine.setAttribute('stroke-width', '6');
+        dataLine.setAttribute('stroke-width', '3');
+        ctrlLine.setAttribute('stroke-width', '3');
+      } else if (step.activeBus === 'data') {
+        dataLine.setAttribute('stroke', '#22D3EE');
+        dataLine.setAttribute('stroke-width', '6');
+        addrLine.setAttribute('stroke-width', '3');
+        ctrlLine.setAttribute('stroke-width', '3');
+      } else if (step.activeBus === 'control') {
+        ctrlLine.setAttribute('stroke', '#F472B6');
+        ctrlLine.setAttribute('stroke-width', '6');
+        addrLine.setAttribute('stroke-width', '3');
+        dataLine.setAttribute('stroke-width', '3');
+      } else {
+        addrLine.setAttribute('stroke-width', '3');
+        dataLine.setAttribute('stroke-width', '3');
+        ctrlLine.setAttribute('stroke-width', '3');
+      }
+
+      // Highlighting specific blocks
+      const allBlocks = ['blockInput', 'blockMemory', 'blockCPU', 'subBlockCU', 'subBlockRegs', 'subBlockALU', 'blockOutput'];
+      allBlocks.forEach(b => {
+        const el = document.getElementById(b);
+        if (el) {
+          el.classList.remove('glow-cyan', 'glow-amber', 'glow-indigo', 'border-indigo-400', 'border-cyan-400', 'border-amber-400');
+        }
+      });
+
+      if (step.highlightBlocks) {
+        step.highlightBlocks.forEach(bId => {
+          const el = document.getElementById(bId);
+          if (el) {
+            el.classList.add('glow-cyan', 'border-cyan-400');
+          }
+        });
+      }
+    }
+
+    // Step Navigation Handlers
+    function nextStep() {
+      if (currentStep < stepDefinitions.length - 1) {
+        currentStep++;
+        renderStep();
+      } else {
+        stopAutoPlay();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        renderStep();
+      }
+    }
+
+    function goToStep(idx) {
+      if (idx >= 0 && idx < stepDefinitions.length) {
+        currentStep = idx;
+        renderStep();
+      }
+    }
+
+    // Auto Play Animation Handler
+    function toggleAutoPlay() {
+      if (isAutoPlaying) {
+        stopAutoPlay();
+      } else {
+        startAutoPlay();
+      }
+    }
+
+    function startAutoPlay() {
+      isAutoPlaying = true;
+      document.getElementById('autoPlayIcon').innerText = '⏸ Pause';
+      document.getElementById('btnAutoPlay').classList.add('bg-indigo-600', 'text-white');
+      
+      if (currentStep >= stepDefinitions.length - 1) {
+        currentStep = 0;
+        renderStep();
+      }
+
+      autoPlayTimer = setInterval(() => {
+        if (currentStep < stepDefinitions.length - 1) {
+          nextStep();
+        } else {
+          stopAutoPlay();
+        }
+      }, 2400);
+    }
+
+    function stopAutoPlay() {
+      isAutoPlaying = false;
+      clearInterval(autoPlayTimer);
+      document.getElementById('autoPlayIcon').innerText = '▶ Auto';
+      document.getElementById('btnAutoPlay').classList.remove('bg-indigo-600', 'text-white');
+    }
+
+    // View Mode Toggle (Interactive vs Full Poster Panoramic)
+    function setMode(mode) {
+      activeMode = mode;
+      const btnInteractive = document.getElementById('modeInteractiveBtn');
+      const btnAll = document.getElementById('modeAllBtn');
+
+      if (mode === 'all') {
+        btnAll.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500');
+        btnInteractive.classList.remove('bg-indigo-600/30', 'border-indigo-500', 'text-indigo-200');
+        btnInteractive.classList.add('bg-cardBg', 'text-slate-300');
+
+        // Light up all components and step cards simultaneously
+        stopAutoPlay();
+        for (let i = 0; i < 10; i++) {
+          const card = document.getElementById(`cardStep${i}`);
+          if (card) {
+            card.classList.add('border-indigo-400', 'bg-slate-800/90');
+          }
+        }
+        document.getElementById('activeStepBox').classList.add('glow-indigo');
+        document.getElementById('stepTitle').innerText = "All 10 Sequence Steps Active (Panoramic Architecture Overview)";
+        document.getElementById('stepDetail').innerText = "Full trace: Fetch (0x0100) -> Decode (ADD) -> Regs(10, 20) -> ALU(30) -> Writeback R1=30 -> Output.";
+      } else {
+        btnInteractive.classList.add('bg-indigo-600/30', 'border-indigo-500', 'text-indigo-200');
+        btnAll.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500');
+        renderStep();
+      }
+    }
+
+    // Keyboard navigation (Arrow keys)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        nextStep();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevStep();
+      }
+    });
+
+    // Initialize first render on page load
+    window.onload = function() {
+      renderStep();
+    };
+  </script>
+</body>
+</html>

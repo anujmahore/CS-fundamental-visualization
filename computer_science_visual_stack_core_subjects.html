@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>How a Computer Thinks: Visual CS Stack & Animated Journey</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+            }
+          },
+          animation: {
+            'glow-pulse': 'glowPulse 2s ease-in-out infinite',
+            'float-slow': 'float 4s ease-in-out infinite',
+          },
+          keyframes: {
+            glowPulse: {
+              '0%, 100%': { filter: 'drop-shadow(0 0 8px rgba(99, 102, 241, 0.6))' },
+              '50%': { filter: 'drop-shadow(0 0 20px rgba(129, 140, 248, 0.9))' }
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-6px)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #312e81;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6366f1;
+    }
+    .panel-glass {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .subject-active {
+      border-color: #818cf8 !important;
+      background: rgba(99, 102, 241, 0.16) !important;
+      transform: translateY(-2px);
+      box-shadow: 0 0 20px -3px rgba(99, 102, 241, 0.4);
+    }
+    /* SVG Dash animation for circuit flow */
+    @keyframes flowLines {
+      to {
+        stroke-dashoffset: -40;
+      }
+    }
+    .animated-wire {
+      stroke-dasharray: 6, 6;
+      animation: flowLines 1.2s linear infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#060911] text-slate-100 min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white overflow-x-hidden">
+
+  <!-- Top Navigation & Controls -->
+  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <i data-lucide="sparkles" class="w-5 h-5 text-white"></i>
+        </div>
+        <div>
+          <h1 class="text-sm sm:text-base font-extrabold tracking-tight text-white flex items-center gap-2">
+            The Animated Computer Story
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">11 Core Subjects</span>
+          </h1>
+          <p class="text-xs text-slate-400 hidden md:block">How math & electricity turn into games, apps & the world wide web</p>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2">
+        <button id="btn-sound-toggle" onclick="toggleSound()" class="p-2 text-xs font-semibold rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 flex items-center gap-1.5 transition">
+          <i id="sound-icon" data-lucide="volume-2" class="w-4 h-4 text-emerald-400"></i>
+          <span class="hidden sm:inline" id="sound-label">Audio: On</span>
+        </button>
+
+        <button onclick="startFullAnimationJourney()" class="px-3.5 py-1.5 text-xs font-bold rounded-lg bg-gradient-to-r from-indigo-500 via-violet-500 to-cyan-500 hover:from-indigo-400 hover:to-cyan-400 text-white flex items-center gap-2 shadow-lg shadow-indigo-500/25 active:scale-95 transition-all">
+          <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i>
+          <span>Animate A Click (Watch Flow)</span>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- Hero / Introduction Banner -->
+  <section class="bg-gradient-to-b from-indigo-950/30 via-slate-950 to-slate-950 border-b border-slate-900/80 py-5 px-4 sm:px-6">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+      <div class="max-w-3xl">
+        <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-300 text-xs font-semibold mb-2">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
+          <span>The Simple Mental Model</span>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-white tracking-tight">
+          A Computer is a Tower of 5 Magical Layers
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-300 mt-1 leading-relaxed">
+          When you click a button on your screen, a signal drops through <span class="text-cyan-400 font-semibold">5 levels</span>:
+          from your <strong class="text-white">human idea</strong> &rarr; into <strong class="text-sky-300">code</strong> &rarr; translated into <strong class="text-indigo-300">0s and 1s</strong> &rarr; executed as <strong class="text-amber-300">electric pulses in silicon</strong> &rarr; and saved or beamed across <strong class="text-emerald-300">fiber optic cables</strong>.
+        </p>
+      </div>
+
+      <!-- Quick interactive step pill -->
+      <div class="flex items-center gap-2 bg-slate-900/90 border border-slate-800 p-2.5 rounded-2xl shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+          <i data-lucide="activity" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <div class="text-[11px] font-bold text-slate-400 uppercase">Live Animation Status</div>
+          <div id="status-live-indicator" class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+            Ready to trace signal
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN WORKSPACE -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+    <!-- LEFT COLUMN: Animated Visual Flow Diagram & Subject Explorer (7 Cols) -->
+    <section class="lg:col-span-7 flex flex-col space-y-5">
+      
+      <!-- Interactive Flow Canvas Card -->
+      <div class="panel-glass rounded-2xl p-4 sm:p-5 border border-slate-800 shadow-2xl relative overflow-hidden flex flex-col">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800/80 mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full bg-cyan-400 shadow-md shadow-cyan-400/50"></div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-200">Animated Signal Pipeline</span>
+          </div>
+          <span class="text-[11px] text-slate-400 flex items-center gap-1">
+            <i data-lucide="hand" class="w-3.5 h-3.5 text-indigo-400"></i> Click any card below to focus
+          </span>
+        </div>
+
+        <!-- SVG Circuit Pipeline Animation -->
+        <div class="relative w-full h-36 bg-[#04060c] rounded-xl border border-slate-800/90 flex items-center justify-center p-2 overflow-hidden shadow-inner">
+          <svg id="pipeline-svg" class="w-full h-full" viewBox="0 0 700 130" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background Tracks -->
+            <path d="M 60 65 L 180 65 L 300 65 L 420 65 L 540 65 L 640 65" stroke="#1e293b" stroke-width="4" stroke-linecap="round"/>
+            <path id="active-wire" d="M 60 65 L 180 65 L 300 65 L 420 65 L 540 65 L 640 65" stroke="#6366f1" stroke-width="3" stroke-linecap="round" class="animated-wire"/>
+
+            <!-- Node 1: Math Foundation -->
+            <g id="node-svg-1" class="cursor-pointer transition-all duration-300" onclick="selectSubject('ds_math')">
+              <circle cx="60" cy="65" r="22" fill="#1e1b4b" stroke="#a855f7" stroke-width="2.5"/>
+              <text x="60" y="69" text-anchor="middle" fill="#e9d5ff" font-size="11" font-weight="bold">Math</text>
+              <text x="60" y="105" text-anchor="middle" fill="#a855f7" font-size="10" font-weight="600">1. Math / TOC</text>
+            </g>
+
+            <!-- Node 2: Logic Gates & Silicon -->
+            <g id="node-svg-2" class="cursor-pointer transition-all duration-300" onclick="selectSubject('dld')">
+              <circle cx="180" cy="65" r="22" fill="#291e0a" stroke="#f59e0b" stroke-width="2.5"/>
+              <text x="180" y="69" text-anchor="middle" fill="#fef3c7" font-size="11" font-weight="bold">0 / 1</text>
+              <text x="180" y="105" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="600">2. Gates & CPU</text>
+            </g>
+
+            <!-- Node 3: OS & Compiler -->
+            <g id="node-svg-3" class="cursor-pointer transition-all duration-300" onclick="selectSubject('os')">
+              <circle cx="300" cy="65" r="22" fill="#1e1e42" stroke="#6366f1" stroke-width="2.5"/>
+              <text x="300" y="69" text-anchor="middle" fill="#e0e7ff" font-size="11" font-weight="bold">Kernel</text>
+              <text x="300" y="105" text-anchor="middle" fill="#818cf8" font-size="10" font-weight="600">3. Compiler & OS</text>
+            </g>
+
+            <!-- Node 4: Software & Algorithms -->
+            <g id="node-svg-4" class="cursor-pointer transition-all duration-300" onclick="selectSubject('prog')">
+              <circle cx="420" cy="65" r="22" fill="#0c2338" stroke="#0ea5e9" stroke-width="2.5"/>
+              <text x="420" y="69" text-anchor="middle" fill="#e0f2fe" font-size="11" font-weight="bold">Code</text>
+              <text x="420" y="105" text-anchor="middle" fill="#38bdf8" font-size="10" font-weight="600">4. Prog & DSA</text>
+            </g>
+
+            <!-- Node 5: Network & Database -->
+            <g id="node-svg-5" class="cursor-pointer transition-all duration-300" onclick="selectSubject('cn')">
+              <circle cx="540" cy="65" r="22" fill="#062e1b" stroke="#10b981" stroke-width="2.5"/>
+              <text x="540" y="69" text-anchor="middle" fill="#d1fae5" font-size="11" font-weight="bold">Web</text>
+              <text x="540" y="105" text-anchor="middle" fill="#34d399" font-size="10" font-weight="600">5. DB & Network</text>
+            </g>
+
+            <!-- Traveling Animated Data Pulse Orb -->
+            <circle id="pulse-orb" cx="60" cy="65" r="9" fill="#38bdf8" filter="url(#glow)" class="transition-all duration-700 ease-out">
+              <animate attributeName="r" values="8;11;8" dur="1.2s" repeatCount="indefinite"/>
+            </circle>
+
+            <defs>
+              <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur stdDeviation="4" result="blur" />
+                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+              </filter>
+            </defs>
+          </svg>
+
+          <!-- Current pulse step narrator bar -->
+          <div class="absolute bottom-1 left-3 right-3 bg-slate-900/90 backdrop-blur rounded-lg px-3 py-1 border border-slate-800 flex items-center justify-between text-[11px]">
+            <span class="text-slate-400 font-medium" id="pulse-description">💡 Click "Animate A Click" above to watch a packet travel in real time!</span>
+            <span class="font-mono text-cyan-400 text-[10px]" id="pulse-step-counter">Idle</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- THE 11 CORE SUBJECTS ARRANGED IN 5 LOGICAL TIERS -->
+      <div class="space-y-3">
+
+        <!-- TIER 5: The Planetary & Storage Layer -->
+        <div class="panel-glass rounded-2xl p-3.5 border border-emerald-500/30 bg-emerald-950/10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="globe" class="w-3.5 h-3.5"></i> Level 5 &bull; The World & Memory Storage
+            </span>
+            <span class="text-[11px] text-emerald-300/70 font-medium">How data travels across oceans & survives power off</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Computer Networks -->
+            <button onclick="selectSubject('cn')" id="card-cn" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                <i data-lucide="network" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Computer Networks
+                  <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">The Roads</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Slices data into digital envelopes (packets) & routes them across Wi-Fi & undersea cables.</p>
+              </div>
+            </button>
+            <!-- DBMS -->
+            <button onclick="selectSubject('dbms')" id="card-dbms" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                <i data-lucide="database" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  DBMS (Databases)
+                  <span class="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.2 rounded font-mono">The Vault</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Stores bank balances & user data safely on SSDs so nothing is lost if power cuts off.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- TIER 4: Software Logic & Efficiency -->
+        <div class="panel-glass rounded-2xl p-3.5 border border-sky-500/30 bg-sky-950/10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-sky-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="code" class="w-3.5 h-3.5"></i> Level 4 &bull; Human Instructions & Speed
+            </span>
+            <span class="text-[11px] text-sky-300/70 font-medium">How humans write logic & make it run fast</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <!-- Programming -->
+            <button onclick="selectSubject('prog')" id="card-prog" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-sky-400 transition-all text-left">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  <i data-lucide="terminal" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs font-bold text-white">Programming</span>
+              </div>
+              <p class="text-[11px] text-slate-400">The human recipe (loops, if/else, functions) solving problems in English-like syntax.</p>
+            </button>
+            <!-- Data Structures -->
+            <button onclick="selectSubject('ds')" id="card-ds" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-sky-400 transition-all text-left">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  <i data-lucide="boxes" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs font-bold text-white">Data Structures</span>
+              </div>
+              <p class="text-[11px] text-slate-400">The digital organizers (Arrays, Stacks, Trees) shaping how information sits in RAM.</p>
+            </button>
+            <!-- DAA -->
+            <button onclick="selectSubject('daa')" id="card-daa" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-sky-400 transition-all text-left">
+              <div class="flex items-center gap-2 mb-1">
+                <div class="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                  <i data-lucide="zap" class="w-4 h-4"></i>
+                </div>
+                <span class="text-xs font-bold text-white">DAA (Algorithms)</span>
+              </div>
+              <p class="text-[11px] text-slate-400">The clever shortcuts (Binary Search, Big-O) so a search takes 1ms instead of 3 hours.</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- TIER 3: The Translator & Conductor -->
+        <div class="panel-glass rounded-2xl p-3.5 border border-indigo-500/30 bg-indigo-950/10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="cpu" class="w-3.5 h-3.5"></i> Level 3 &bull; System Software & Translation
+            </span>
+            <span class="text-[11px] text-indigo-300/70 font-medium">Turning English code into 0s and 1s & managing CPU</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Compiler Design -->
+            <button onclick="selectSubject('cd')" id="card-cd" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-indigo-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0">
+                <i data-lucide="languages" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Compiler Design
+                  <span class="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded font-mono">The Translator</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Reads your text code, checks grammar, and produces raw binary machine code.</p>
+              </div>
+            </button>
+            <!-- Operating System -->
+            <button onclick="selectSubject('os')" id="card-os" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-indigo-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 shrink-0">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Operating System (OS)
+                  <span class="text-[9px] bg-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded font-mono">Traffic Police</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Stops programs from crashing into each other, allocates RAM & CPU clock cycles.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- TIER 2: Hardware Architecture & Silicon -->
+        <div class="panel-glass rounded-2xl p-3.5 border border-amber-500/30 bg-amber-950/10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="microchip" class="w-3.5 h-3.5"></i> Level 2 &bull; Physical Hardware & Circuits
+            </span>
+            <span class="text-[11px] text-amber-300/70 font-medium">Electric wires, registers & microscopic switches</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- COA -->
+            <button onclick="selectSubject('coa')" id="card-coa" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                <i data-lucide="cpu" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Comp. Org & Arch (COA)
+                  <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono">The Engine</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">The blueprint of the CPU: Fetch-Decode-Execute, Registers, ALU, and Cache.</p>
+              </div>
+            </button>
+            <!-- DLD -->
+            <button onclick="selectSubject('dld')" id="card-dld" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-amber-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0">
+                <i data-lucide="toggle-right" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Digital Logic Design (DLD)
+                  <span class="text-[9px] bg-amber-500/20 text-amber-300 px-1.5 py-0.2 rounded font-mono">The Switches</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">AND, OR, NOT gates built from physical transistors turning electricity into 1s and 0s.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- TIER 1: Mathematical Foundations -->
+        <div class="panel-glass rounded-2xl p-3.5 border border-fuchsia-500/30 bg-fuchsia-950/10">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-extrabold text-fuchsia-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="infinity" class="w-3.5 h-3.5"></i> Level 1 &bull; The Mathematical Soul
+            </span>
+            <span class="text-[11px] text-fuchsia-300/70 font-medium">The laws of logic defining what can ever be computed</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Theory of Computation -->
+            <button onclick="selectSubject('toc')" id="card-toc" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-fuchsia-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 shrink-0">
+                <i data-lucide="binary" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Theory of Computation (TOC)
+                  <span class="text-[9px] bg-fuchsia-500/20 text-fuchsia-300 px-1.5 py-0.2 rounded font-mono">The Limits</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Turing machines and automata proving what problems are solvable by any machine.</p>
+              </div>
+            </button>
+            <!-- Discrete Structures -->
+            <button onclick="selectSubject('ds_math')" id="card-ds_math" class="subject-card p-3 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-fuchsia-400 transition-all text-left flex items-start gap-3">
+              <div class="p-2 rounded-lg bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20 shrink-0">
+                <i data-lucide="git-merge" class="w-5 h-5"></i>
+              </div>
+              <div>
+                <div class="text-xs font-bold text-white flex items-center gap-1.5">
+                  Discrete Structures (Math)
+                  <span class="text-[9px] bg-fuchsia-500/20 text-fuchsia-300 px-1.5 py-0.2 rounded font-mono">The Grammar</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-0.5">Boolean logic, sets, and graph theory: the exact mathematical grammar of digital computers.</p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- RIGHT COLUMN: Interactive Subject Inspector & Visual Micro-Sim (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col space-y-4">
+      <div id="inspector-card" class="panel-glass rounded-2xl p-5 border border-slate-800 shadow-2xl flex-1 flex flex-col justify-between">
+        
+        <div>
+          <!-- Header Badge -->
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800/80">
+            <span id="badge-level" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+              Level 3 &bull; System Software
+            </span>
+            <span id="badge-nickname" class="text-xs font-mono text-cyan-400 font-semibold">
+              The Traffic Police
+            </span>
+          </div>
+
+          <!-- Title & Icon -->
+          <div class="flex items-center gap-3.5 mt-4">
+            <div id="subject-icon-wrap" class="w-12 h-12 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30 flex items-center justify-center shrink-0">
+              <i data-lucide="shield-check" class="w-6 h-6"></i>
+            </div>
+            <div>
+              <h3 id="subject-name" class="text-lg sm:text-xl font-black text-white tracking-tight">Operating System (OS)</h3>
+              <p id="subject-tagline" class="text-xs text-indigo-300 font-medium">The Conductor of All Hardware and Apps</p>
+            </div>
+          </div>
+
+          <!-- THE "IN SIMPLE WORDS" (ELI5) BOX -->
+          <div class="mt-4 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 flex items-center gap-1.5 mb-1">
+              <i data-lucide="lightbulb" class="w-3.5 h-3.5"></i> In Simple Words (ELI5)
+            </div>
+            <p id="subject-simple" class="text-xs sm:text-sm text-slate-200 leading-relaxed font-medium">
+              If your computer was a busy airport, the Operating System is Air Traffic Control. It makes sure games, music players, and browsers take turns using the CPU runway without crashing into each other.
+            </p>
+          </div>
+
+          <!-- HOW IT CONNECTS TO A REAL COMPUTER -->
+          <div class="mt-3.5 p-3 rounded-xl bg-slate-900/50 border border-slate-800">
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+              <i data-lucide="cpu" class="w-3.5 h-3.5 text-cyan-400"></i> Where it lives in your computer:
+            </div>
+            <p id="subject-hardware-connect" class="text-xs text-slate-300 leading-relaxed">
+              Runs as the privileged Kernel inside RAM, sitting directly between software applications and the physical CPU chip & hard drive.
+            </p>
+          </div>
+
+          <!-- LIVE ANIMATED INTERACTIVE DEMO CONTAINER -->
+          <div class="mt-4">
+            <div class="flex items-center justify-between mb-1.5">
+              <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <i data-lucide="play-circle" class="w-3.5 h-3.5 text-indigo-400"></i> Live Interactive Experiment:
+              </div>
+              <span class="text-[10px] text-indigo-400 font-semibold">Try clicking it!</span>
+            </div>
+            <div id="interactive-playground" class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+              <!-- Dynamically populated by renderPlayground() -->
+            </div>
+          </div>
+
+          <!-- Real World Application -->
+          <div class="mt-3.5">
+            <div class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 flex items-center gap-1.5 mb-1">
+              <i data-lucide="rocket" class="w-3.5 h-3.5 text-emerald-400"></i> Real World Applications:
+            </div>
+            <div id="subject-realworld-list" class="flex flex-wrap gap-1.5 text-xs text-slate-300">
+              <span class="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700">Windows 11</span>
+              <span class="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700">Linux</span>
+              <span class="px-2 py-0.5 rounded-md bg-slate-800 border border-slate-700">Apple iOS & Android</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Understanding Challenge -->
+        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between">
+          <div class="text-xs text-slate-400">Want to test how they link together?</div>
+          <button onclick="openEasyQuiz()" class="px-3 py-1.5 rounded-lg bg-indigo-600/30 hover:bg-indigo-600 text-indigo-200 border border-indigo-500/40 text-xs font-bold transition flex items-center gap-1.5">
+            <i data-lucide="help-circle" class="w-3.5 h-3.5"></i>
+            <span>Quick Puzzle</span>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Pop-up Interactive Quiz Modal -->
+  <div id="quiz-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-5 shadow-2xl relative">
+      <button onclick="closeQuizModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-800">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+
+      <div class="flex items-center gap-2 mb-2 text-indigo-400 text-xs font-bold uppercase tracking-wider">
+        <i data-lucide="brain" class="w-4 h-4"></i>
+        <span>Who Handles This Job?</span>
+      </div>
+
+      <h3 id="quiz-q-text" class="text-sm sm:text-base font-bold text-white mb-2 leading-snug">
+        When you type code like "if (x > 10)", which subject transforms this English text into 0s and 1s?
+      </h3>
+
+      <div id="quiz-options-container" class="space-y-2 mt-3">
+        <!-- Injected dynamically -->
+      </div>
+
+      <div id="quiz-feedback-box" class="mt-3.5 p-3 rounded-xl hidden text-xs font-semibold"></div>
+
+      <div class="mt-4 flex justify-end">
+        <button onclick="loadNextQuizQuestion()" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold">
+          Next Question &rarr;
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple Web Audio API Synthesizer (No external sound files required)
+    let audioCtx = null;
+    let isSoundOn = true;
+
+    function playBeep(freq = 440, type = 'sine', duration = 0.08) {
+      if (!isSoundOn) return;
+      try {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        // Audio fallback
+      }
+    }
+
+    function toggleSound() {
+      isSoundOn = !isSoundOn;
+      const lbl = document.getElementById('sound-label');
+      const icon = document.getElementById('sound-icon');
+      if (isSoundOn) {
+        lbl.innerText = 'Audio: On';
+        icon.className = 'w-4 h-4 text-emerald-400';
+        playBeep(520, 'sine', 0.1);
+      } else {
+        lbl.innerText = 'Audio: Muted';
+        icon.className = 'w-4 h-4 text-slate-500';
+      }
+    }
+
+    // Complete knowledge base of all 11 core CS subjects written in straightforward ELI5 language
+    const csSubjects = {
+      os: {
+        id: 'os',
+        title: 'Operating System (OS)',
+        nickname: 'The Traffic Conductor',
+        levelBadge: 'Level 3 &bull; System Software',
+        icon: 'shield-check',
+        color: 'indigo',
+        nodeIndex: 3,
+        tagline: 'The Conductor of All Hardware and Apps',
+        simple: 'Without an OS, every app would fight over your screen and speakers. The OS gives your Spotify, browser, and games their fair turn on the CPU, and protects files so nothing crashes.',
+        hardwareConnect: 'Lives in privileged RAM as the Kernel. It sits right between software programs and the raw CPU, RAM sticks, and hard disk.',
+        realworld: ['Windows 11', 'macOS', 'Linux', 'Android', 'iOS in your pocket'],
+        demo: 'os'
+      },
+      cd: {
+        id: 'cd',
+        title: 'Compiler Design',
+        nickname: 'The Language Translator',
+        levelBadge: 'Level 3 &bull; System Software',
+        icon: 'languages',
+        color: 'indigo',
+        nodeIndex: 3,
+        tagline: 'Translating Human English Words to Silicon Binary',
+        simple: 'Computers cannot understand words like "print(score)". The compiler reads your text code, checks for spelling/grammar errors, optimizes it to be fast, and translates it into pure 1s and 0s.',
+        hardwareConnect: 'Runs on your computer to produce binary executable files (.exe or machine opcodes) that the CPU directly loads into memory.',
+        realworld: ['GCC & Clang', 'V8 Engine in Google Chrome', 'Rust Compiler', 'JVM (Java Virtual Machine)'],
+        demo: 'compiler'
+      },
+      coa: {
+        id: 'coa',
+        title: 'Computer Organization & Architecture (COA)',
+        nickname: 'The Microscopic Engine',
+        levelBadge: 'Level 2 &bull; Hardware Architecture',
+        icon: 'cpu',
+        color: 'amber',
+        nodeIndex: 2,
+        tagline: 'The Blueprint of Registers, ALUs, and Fast Caches',
+        simple: 'Architecture is the instruction manual (what commands the CPU understands like ADD, SUB, STORE); Organization is how the tiny silicon parts physically execute them in billionths of a second.',
+        hardwareConnect: 'Etched directly inside the silicon processor chip (Intel Core, AMD Ryzen, Apple M-Series chips).',
+        realworld: ['Apple Silicon M1/M2/M3', 'Intel Core i9', 'NVIDIA GPU Cores', 'ARM chips in phones'],
+        demo: 'coa'
+      },
+      dld: {
+        id: 'dld',
+        title: 'Digital Logic Design (DLD)',
+        nickname: 'The Light Switches',
+        levelBadge: 'Level 2 &bull; Hardware Architecture',
+        icon: 'toggle-right',
+        color: 'amber',
+        nodeIndex: 2,
+        tagline: 'Turning Raw High & Low Electric Voltage into 1s and 0s',
+        simple: 'Electricity is just voltage. DLD shows how billions of microscopic transistors snap ON (5 Volts = 1) and OFF (0 Volts = 0) to build AND, OR, and NOT gates that add numbers and remember memory.',
+        hardwareConnect: 'The nanometer-thin silicon transistors etched on microchips and motherboard logic boards.',
+        realworld: ['Microcontroller boards', 'Transistor chips', 'RAM memory latches', 'Hardware calculators'],
+        demo: 'dld'
+      },
+      ds_math: {
+        id: 'ds_math',
+        title: 'Discrete Structures / Discrete Mathematics',
+        nickname: 'The Exact Grammar',
+        levelBadge: 'Level 1 &bull; Mathematical Soul',
+        icon: 'git-merge',
+        color: 'fuchsia',
+        nodeIndex: 1,
+        tagline: 'The Strict Mathematical Rules of Truth and Connections',
+        simple: 'Unlike school math with curved smooth lines, computers work in discrete, distinct steps (True vs False, 0 vs 1, Connected vs Unconnected). This math guarantees computer logic is 100% bug-free.',
+        hardwareConnect: 'The pure mathematical foundation that all logic circuits, encryption keys, and algorithms are built upon.',
+        realworld: ['RSA Bank Encryption', 'GPS Shortest Path routes', 'Relational database logic', 'Network routing'],
+        demo: 'math'
+      },
+      toc: {
+        id: 'toc',
+        title: 'Theory of Computation (TOC)',
+        nickname: 'The Outer Limits',
+        levelBadge: 'Level 1 &bull; Mathematical Soul',
+        icon: 'binary',
+        color: 'fuchsia',
+        nodeIndex: 1,
+        tagline: 'Proving What Can and Cannot Be Computed by Any Machine',
+        simple: 'Can a computer solve every conceivable riddle? TOC proves the answer is NO! It categorizes machines from simple vending machine state machines up to universal Turing machines.',
+        hardwareConnect: 'Theoretical computer science; defines the universal limits of what any physical computer or quantum processor can compute.',
+        realworld: ['Regex pattern searching', 'Programming grammar design', 'Quantum computing limits', 'Unsolvable Halting problem'],
+        demo: 'toc'
+      },
+      prog: {
+        id: 'prog',
+        title: 'Programming (Languages & Logic)',
+        nickname: 'The Human Recipe',
+        levelBadge: 'Level 4 &bull; Human Instructions',
+        icon: 'terminal',
+        color: 'sky',
+        nodeIndex: 4,
+        tagline: 'The Creative Way Humans Give Orders to Machines',
+        simple: 'Programming is how humans write recipes for computers using friendly words. Instead of moving electrical wires by hand, you write "if button_pressed: play_song()".',
+        hardwareConnect: 'Written in text files, stored on your disk or cloud, and loaded into RAM by the OS for translation.',
+        realworld: ['Python', 'JavaScript (building websites)', 'C++ (in video games)', 'Rust & Swift'],
+        demo: 'prog'
+      },
+      ds: {
+        id: 'ds',
+        title: 'Data Structures',
+        nickname: 'The Organized Drawers',
+        levelBadge: 'Level 4 &bull; Human Instructions',
+        icon: 'boxes',
+        color: 'sky',
+        nodeIndex: 4,
+        tagline: 'How Information is Neatly Arranged Inside RAM',
+        simple: 'If you throw your socks in a messy pile, finding one takes forever. A Data Structure organizes data in RAM (like an indexed dresser or bookshelf) so finding and editing it takes a microsecond.',
+        hardwareConnect: 'Allocated in temporary computer RAM (the Stack and Heap memory blocks).',
+        realworld: ['Browser Back Button (Stack)', 'Spotify Playlist (Linked List)', 'Contact Book (Hash Table)', 'Maps (Graphs)'],
+        demo: 'ds'
+      },
+      daa: {
+        id: 'daa',
+        title: 'Design and Analysis of Algorithms (DAA)',
+        nickname: 'The Secret Shortcuts',
+        levelBadge: 'Level 4 &bull; Human Instructions',
+        icon: 'zap',
+        color: 'sky',
+        nodeIndex: 4,
+        tagline: 'Doing Tasks in Milliseconds Instead of Millions of Years',
+        simple: 'Two recipes can cook soup: one takes 5 hours, one takes 5 minutes. DAA teaches you to design methods that scale easily when handling 10 items or 10 billion Google searches without freezing.',
+        hardwareConnect: 'The computational steps and clock cycles executed on the CPU.',
+        realworld: ['Google Search Indexing', 'Netflix recommendations', 'Instagram feed sorting', 'Dijkstra GPS Navigation'],
+        demo: 'daa'
+      },
+      dbms: {
+        id: 'dbms',
+        title: 'Database Management Systems (DBMS)',
+        nickname: 'The Indestructible Safe',
+        levelBadge: 'Level 5 &bull; The World & Storage',
+        icon: 'database',
+        color: 'emerald',
+        nodeIndex: 5,
+        tagline: 'Safely Storing Billions of Records Even Through Blackouts',
+        simple: 'When you turn off your PC, RAM forgets everything! DBMS writes your bank accounts, chat history, and game levels to permanent SSD drives so they survive crashes without ever corrupting.',
+        hardwareConnect: 'Directly manages permanent storage: SSDs, Hard Disks, and NVMe drives.',
+        realworld: ['PostgreSQL & MySQL', 'MongoDB', 'SQLite inside every iPhone & Android', 'Cloud Amazon DynamoDB'],
+        demo: 'dbms'
+      },
+      cn: {
+        id: 'cn',
+        title: 'Computer Networks',
+        nickname: 'The Planetary Roads',
+        levelBadge: 'Level 5 &bull; The World & Storage',
+        icon: 'network',
+        color: 'emerald',
+        nodeIndex: 5,
+        tagline: 'Connecting Millions of Isolated Laptops into the Global Web',
+        simple: 'A lone laptop is just a digital calculator. Networks chop your video stream into millions of tiny numbered postcards (packets) and zip them through Wi-Fi and undersea fiber cables across the planet.',
+        hardwareConnect: 'Wi-Fi chips, Network Interface Cards (NIC), Ethernet cables, and satellite antennas.',
+        realworld: ['The Global Internet', '5G Wireless Networks', 'YouTube Streaming', 'Multiplayer Game servers'],
+        demo: 'cn'
+      }
+    };
+
+    let currentSelectedId = 'os';
+
+    function selectSubject(id) {
+      if (!csSubjects[id]) return;
+      currentSelectedId = id;
+      const item = csSubjects[id];
+
+      playBeep(480, 'sine', 0.05);
+
+      // Highlight corresponding card
+      document.querySelectorAll('.subject-card').forEach(btn => btn.classList.remove('subject-active'));
+      const activeBtn = document.getElementById(`card-${id}`);
+      if (activeBtn) activeBtn.classList.add('subject-active');
+
+      // Update Inspector Panel text
+      document.getElementById('badge-level').innerHTML = item.levelBadge;
+      document.getElementById('badge-nickname').innerText = item.nickname;
+      document.getElementById('subject-name').innerText = item.title;
+      document.getElementById('subject-tagline').innerText = item.tagline;
+      document.getElementById('subject-simple').innerText = item.simple;
+      document.getElementById('subject-hardware-connect').innerText = item.hardwareConnect;
+
+      // Update Icon
+      const iconWrap = document.getElementById('subject-icon-wrap');
+      iconWrap.innerHTML = `<i data-lucide="${item.icon}" class="w-6 h-6"></i>`;
+
+      // Update Real World tags
+      const rwContainer = document.getElementById('subject-realworld-list');
+      rwContainer.innerHTML = item.realworld.map(rw => `
+        <span class="px-2 py-0.5 rounded-md bg-slate-800/80 border border-slate-700/80 text-[11px] font-medium text-slate-200">
+          ${rw}
+        </span>
+      `).join('');
+
+      // Move pipeline pulse to this node
+      movePulseToNode(item.nodeIndex, `${item.nickname}: ${item.title}`);
+
+      // Render the specific micro-simulation
+      renderPlayground(item.demo);
+      lucide.createIcons();
+    }
+
+    function movePulseToNode(nodeNumber, label) {
+      const nodePositions = {
+        1: 60,
+        2: 180,
+        3: 300,
+        4: 420,
+        5: 540
+      };
+      const x = nodePositions[nodeNumber] || 300;
+      const orb = document.getElementById('pulse-orb');
+      if (orb) {
+        orb.setAttribute('cx', x);
+      }
+      const desc = document.getElementById('pulse-description');
+      const counter = document.getElementById('pulse-step-counter');
+      if (desc) desc.innerText = `Focused on: ${label}`;
+      if (counter) counter.innerText = `Node ${nodeNumber}/5`;
+    }
+
+    function renderPlayground(type) {
+      const pg = document.getElementById('interactive-playground');
+      
+      switch(type) {
+        case 'os':
+          pg.innerHTML = `
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-[11px] text-slate-300">
+                <span class="font-bold flex items-center gap-1"><i data-lucide="clock" class="w-3.5 h-3.5 text-indigo-400"></i> CPU Time-Slice Round Robin</span>
+                <span id="os-quantum" class="font-mono text-emerald-400 font-semibold">Slice: 25ms</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1.5 font-mono text-xs text-center">
+                <div id="sim-proc-1" class="p-2 rounded-lg bg-indigo-600 text-white font-bold ring-2 ring-white">Browser</div>
+                <div id="sim-proc-2" class="p-2 rounded-lg bg-slate-800 text-slate-400">Music</div>
+                <div id="sim-proc-3" class="p-2 rounded-lg bg-slate-800 text-slate-400">Game</div>
+              </div>
+              <div class="flex items-center justify-between pt-1">
+                <span id="sim-os-status" class="text-[10px] text-indigo-300 font-medium">Browser is currently using the CPU</span>
+                <button onclick="advanceOsSlice()" class="px-2.5 py-1 bg-indigo-600/40 hover:bg-indigo-600 text-indigo-200 text-xs font-semibold rounded-lg transition active:scale-95">Next Turn &rarr;</button>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'dld':
+          pg.innerHTML = `
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-300">Physical AND Logic Gate</span>
+                <span id="dld-gate-output" class="font-mono text-[11px] text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800 font-bold">OUTPUT: 0 (No current)</span>
+              </div>
+              <div class="flex items-center justify-around py-2 bg-slate-900/90 rounded-lg border border-slate-800">
+                <button onclick="toggleDldSwitch('A')" id="btn-sw-a" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-mono font-bold text-slate-300 border border-slate-700">Switch A: OFF (0V)</button>
+                <span class="text-xs font-bold text-amber-400">&amp;</span>
+                <button onclick="toggleDldSwitch('B')" id="btn-sw-b" class="px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-mono font-bold text-slate-300 border border-slate-700">Switch B: OFF (0V)</button>
+              </div>
+              <p class="text-[10px] text-slate-400">Toggle both switches to complete the electric circuit and light up the transistor output!</p>
+            </div>
+          `;
+          break;
+
+        case 'compiler':
+          pg.innerHTML = `
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <span>1. Your English Code</span>
+                <span>&rarr;</span>
+                <span>2. Machine 0s & 1s</span>
+              </div>
+              <div class="grid grid-cols-2 gap-2 font-mono text-[11px]">
+                <div class="p-2 bg-slate-900 rounded-lg border border-slate-800 text-sky-300">
+                  let total = 5 + 3;
+                </div>
+                <div class="p-2 bg-slate-900 rounded-lg border border-slate-800 text-emerald-400 animate-pulse">
+                  01001000 83 C0 08
+                </div>
+              </div>
+              <p class="text-[10px] text-slate-400">The compiler verifies spelling rules, and outputs opcodes the CPU understands.</p>
+            </div>
+          `;
+          break;
+
+        case 'coa':
+          pg.innerHTML = `
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between text-[11px] text-slate-300">
+                <span class="font-bold">CPU Engine: Fetch &rarr; Decode &rarr; Execute</span>
+                <span id="coa-stage-badge" class="font-mono text-amber-400 font-bold">1. FETCH from RAM</span>
+              </div>
+              <div class="grid grid-cols-3 gap-1 font-mono text-[10px] text-center">
+                <div id="coa-step-1" class="p-1.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold">FETCH</div>
+                <div id="coa-step-2" class="p-1.5 rounded bg-slate-900 text-slate-500 border border-slate-800">DECODE</div>
+                <div id="coa-step-3" class="p-1.5 rounded bg-slate-900 text-slate-500 border border-slate-800">EXECUTE</div>
+              </div>
+              <div class="flex justify-between items-center pt-1">
+                <span class="text-[10px] text-slate-400">Clock Tick: 3.5 GHz</span>
+                <button onclick="advanceCoaTick()" class="px-2.5 py-1 bg-amber-600/40 hover:bg-amber-600 text-amber-200 text-xs font-semibold rounded-lg transition active:scale-95">Clock Pulse &rarr;</button>
+              </div>
+            </div>
+          `;
+          break;
+
+        case 'ds':
+          pg.innerHTML = `
+            <div class="space-y-2">
+              <div class="flex items-center justify-between text-xs text-slate-300 font-bold">
+                <span>The Stack Structure (LIFO: Last In, First Out)</span>
+                <span class="font-mono text-sky-400 text-[10px]">Browser History</span>
+              </div>
+              <div id="stack-items-wrap" class="flex flex-col-reverse gap-1 p-2 bg-slate-900/90 rounded-lg border border-slate-800 min-h-[50px]">
+                <div class="p-1 text-center font-mono text-[11px] rounded bg-sky-950 border border-sky-600 text-sky-200">1. Home Page</div>
+                <div class="p-1 text-center font-mono text-[11px] rounded bg-sky-900 border border-sky-500 text-sky-100">2. Search Results</div>
+                <div class="p-1 text-center font-mono text-[11px] rounded bg-sky-800 border border-sky-400 text-white font-bold">3. Profile (Top)</div>
+              </div>
+              <p class="text-[10px] text-slate-400">Clicking 'Back' in your browser simply pops the top element off the data structure!</p>
+            </div>
+          `;
+          break;
+
+        case 'daa':
+          pg.innerHTML = `
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="font-bold">Searching 1 Million Records</span>
+                <span class="font-mono text-emerald-400 text-[10px]">Algorithm Magic</span>
+              </div>
+              <div class="space-y-1 font-mono text-[11px]">
+                <div class="flex justify-between p-1.5 bg-rose-950/20 border border-rose-900/40 rounded text-rose-300">
+                  <span>Slow Linear Search (O(N)):</span>
+                  <span class="font-bold">1,000,000 steps</span>
+                </div>
+                <div class="flex justify-between p-1.5 bg-emerald-950/20 border border-emerald-900/40 rounded text-emerald-300">
+                  <span>Smart Binary Search (O(log N)):</span>
+                  <span class="font-bold">Just 20 steps!</span>
+                </div>
+              </div>
+              <p class="text-[10px] text-slate-400">DAA is the reason Google can answer queries in 0.02 seconds.</p>
+            </div>
+          `;
+          break;
+
+        case 'cn':
+          pg.innerHTML = `
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between text-slate-300 font-bold">
+                <span>Packet Encapsulation</span>
+                <span class="text-emerald-400 font-mono text-[10px]">Over Fiber Cables</span>
+              </div>
+              <div class="flex items-center gap-1 font-mono text-[10px] text-center">
+                <div class="p-1.5 rounded bg-slate-800 text-slate-300 flex-1 border border-slate-700">Ethernet MAC</div>
+                <span class="text-slate-600">+</span>
+                <div class="p-1.5 rounded bg-sky-950 text-sky-300 flex-1 border border-sky-800">IP Address</div>
+                <span class="text-slate-600">+</span>
+                <div class="p-1.5 rounded bg-emerald-950 text-emerald-300 flex-1 border border-emerald-800">Your "Hello"</div>
+              </div>
+              <p class="text-[10px] text-slate-400">Your chat text is wrapped in address labels like an envelope and sent worldwide.</p>
+            </div>
+          `;
+          break;
+
+        case 'dbms':
+          pg.innerHTML = `
+            <div class="space-y-2 text-xs">
+              <div class="flex items-center justify-between text-slate-300 font-bold">
+                <span>The ACID Crash Guarantee</span>
+                <span class="text-emerald-400 font-mono text-[10px]">Crash-Proof</span>
+              </div>
+              <div class="grid grid-cols-2 gap-1.5 text-[11px] font-mono">
+                <div class="p-1.5 bg-slate-900 rounded border border-emerald-800 text-emerald-300">
+                  &bull; Atomicity: All or Nothing
+                </div>
+                <div class="p-1.5 bg-slate-900 rounded border border-emerald-800 text-emerald-300">
+                  &bull; Durability: Saved on SSD
+                </div>
+              </div>
+              <p class="text-[10px] text-slate-400">Even if your laptop loses battery mid-payment, money is never duplicated or lost.</p>
+            </div>
+          `;
+          break;
+
+        default:
+          pg.innerHTML = `
+            <div class="p-2.5 rounded-lg bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+              <span class="text-indigo-400 font-bold">Foundation of Computing:</span>
+              Mathematical rules guarantee every byte processed by a computer is provably accurate and predictable.
+            </div>
+          `;
+      }
+      lucide.createIcons();
+    }
+
+    // Interactive switch logic for DLD demo
+    let swA = 0;
+    let swB = 0;
+    function toggleDldSwitch(target) {
+      if (target === 'A') swA = swA === 0 ? 1 : 0;
+      if (target === 'B') swB = swB === 0 ? 1 : 0;
+
+      const btnA = document.getElementById('btn-sw-a');
+      const btnB = document.getElementById('btn-sw-b');
+      const out = document.getElementById('dld-gate-output');
+
+      if (btnA) {
+        btnA.innerText = `Switch A: ${swA ? 'ON (5V)' : 'OFF (0V)'}`;
+        btnA.className = swA ? 'px-3 py-1.5 rounded-lg bg-emerald-600 text-xs font-mono font-bold text-white shadow' : 'px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-mono font-bold text-slate-300 border border-slate-700';
+      }
+      if (btnB) {
+        btnB.innerText = `Switch B: ${swB ? 'ON (5V)' : 'OFF (0V)'}`;
+        btnB.className = swB ? 'px-3 py-1.5 rounded-lg bg-emerald-600 text-xs font-mono font-bold text-white shadow' : 'px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-mono font-bold text-slate-300 border border-slate-700';
+      }
+
+      const res = swA && swB ? 1 : 0;
+      playBeep(res ? 800 : 300, 'square', 0.08);
+
+      if (out) {
+        if (res) {
+          out.className = 'font-mono text-[11px] text-emerald-300 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500 font-bold';
+          out.innerText = 'OUTPUT: 1 (CURRENT FLOWS!)';
+        } else {
+          out.className = 'font-mono text-[11px] text-rose-400 bg-rose-950/60 px-2 py-0.5 rounded border border-rose-800 font-bold';
+          out.innerText = 'OUTPUT: 0 (No current)';
+        }
+      }
+    }
+
+    // OS Scheduler Demo Ticks
+    let osProcIndex = 0;
+    function advanceOsSlice() {
+      osProcIndex = (osProcIndex + 1) % 3;
+      playBeep(450 + osProcIndex * 80, 'sine', 0.06);
+
+      const p1 = document.getElementById('sim-proc-1');
+      const p2 = document.getElementById('sim-proc-2');
+      const p3 = document.getElementById('sim-proc-3');
+      const lbl = document.getElementById('sim-os-status');
+
+      if (!p1 || !p2 || !p3 || !lbl) return;
+
+      [p1, p2, p3].forEach(p => {
+        p.className = 'p-2 rounded-lg bg-slate-800 text-slate-400';
+      });
+
+      if (osProcIndex === 0) {
+        p1.className = 'p-2 rounded-lg bg-indigo-600 text-white font-bold ring-2 ring-white';
+        lbl.innerText = 'Browser is currently using the CPU';
+      } else if (osProcIndex === 1) {
+        p2.className = 'p-2 rounded-lg bg-violet-600 text-white font-bold ring-2 ring-white';
+        lbl.innerText = 'Music Player is currently using the CPU';
+      } else {
+        p3.className = 'p-2 rounded-lg bg-sky-600 text-white font-bold ring-2 ring-white';
+        lbl.innerText = '3D Game is currently using the CPU';
+      }
+    }
+
+    // COA Cycle Ticks
+    let coaStep = 0;
+    function advanceCoaTick() {
+      coaStep = (coaStep + 1) % 3;
+      playBeep(350 + coaStep * 120, 'triangle', 0.06);
+
+      const s1 = document.getElementById('coa-step-1');
+      const s2 = document.getElementById('coa-step-2');
+      const s3 = document.getElementById('coa-step-3');
+      const b = document.getElementById('coa-stage-badge');
+
+      if (!s1 || !s2 || !s3 || !b) return;
+
+      s1.className = 'p-1.5 rounded bg-slate-900 text-slate-500 border border-slate-800';
+      s2.className = 'p-1.5 rounded bg-slate-900 text-slate-500 border border-slate-800';
+      s3.className = 'p-1.5 rounded bg-slate-900 text-slate-500 border border-slate-800';
+
+      if (coaStep === 0) {
+        s1.className = 'p-1.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/50 font-bold';
+        b.innerText = '1. FETCH instruction from RAM';
+      } else if (coaStep === 1) {
+        s2.className = 'p-1.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 font-bold';
+        b.innerText = '2. DECODE opcode in control unit';
+      } else {
+        s3.className = 'p-1.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 font-bold';
+        b.innerText = '3. EXECUTE inside ALU registers';
+      }
+    }
+
+    const fullJourney = [
+      { id: 'prog', node: 4, msg: 'Step 1/5: You click a button. High-level Programming code registers the event.' },
+      { id: 'cd', node: 3, msg: 'Step 2/5: Compiler translates your code instructions into machine binary opcodes.' },
+      { id: 'os', node: 3, msg: 'Step 3/5: Operating System schedules CPU time and grants RAM space.' },
+      { id: 'coa', node: 2, msg: 'Step 4/5: COA & DLD physically switch billions of silicon transistors ON and OFF.' },
+      { id: 'cn', node: 5, msg: 'Step 5/5: Computer Networks wrap the data into packets and transmit them worldwide!' }
+    ];
+
+    let journeyTimer = null;
+    let journeyStep = 0;
+
+    function startFullAnimationJourney() {
+      if (journeyTimer) clearInterval(journeyTimer);
+      journeyStep = 0;
+      const statusInd = document.getElementById('status-live-indicator');
+      if (statusInd) statusInd.innerText = 'Tracing active click...';
+
+      runNextJourneyStep();
+      journeyTimer = setInterval(() => {
+        journeyStep++;
+        if (journeyStep < fullJourney.length) {
+          runNextJourneyStep();
+        } else {
+          clearInterval(journeyTimer);
+          if (statusInd) statusInd.innerText = 'Signal completed!';
+          playBeep(880, 'sine', 0.2);
+        }
+      }, 2200);
+    }
+
+    function runNextJourneyStep() {
+      const step = fullJourney[journeyStep];
+      selectSubject(step.id);
+      const desc = document.getElementById('pulse-description');
+      const counter = document.getElementById('pulse-step-counter');
+      if (desc) desc.innerText = step.msg;
+      if (counter) counter.innerText = `Step ${journeyStep + 1} of ${fullJourney.length}`;
+      playBeep(400 + journeyStep * 100, 'sine', 0.1);
+    }
+
+    const simpleQuiz = [
+      {
+        q: "When you write 'let x = 10;', which subject translates this human English sentence into 1s and 0s?",
+        opts: ["Compiler Design", "Computer Networks", "DBMS", "Operating System"],
+        correct: 0,
+        tip: "Compiler Design is the master translator from human code to machine binary."
+      },
+      {
+        q: "If 5 apps are open at once, which subject acts like the traffic police to stop them from freezing?",
+        opts: ["Theory of Computation", "Operating System (OS)", "Digital Logic Design", "Discrete Math"],
+        correct: 1,
+        tip: "The OS manages process scheduling and gives each app fair CPU time."
+      },
+      {
+        q: "Which subject builds physical AND, OR, and NOT gates using transistors and voltages?",
+        opts: ["Data Structures", "Digital Logic Design (DLD)", "Compiler Design", "Networks"],
+        correct: 1,
+        tip: "DLD deals with hardware gates and physical electricity on chips."
+      },
+      {
+        q: "Which subject ensures your bank account never loses money even if your phone battery dies mid-transfer?",
+        opts: ["DBMS (Databases)", "DAA", "Theory of Computation", "Programming"],
+        correct: 0,
+        tip: "DBMS provides ACID crash guarantees so transactions are always safe."
+      },
+      {
+        q: "Which subject slices your videos into small packets to stream across Wi-Fi and undersea cables?",
+        opts: ["Computer Networks", "Compiler Design", "Discrete Structures", "COA"],
+        correct: 0,
+        tip: "Computer Networks route packets across the globe using TCP/IP."
+      }
+    ];
+
+    let currentQuizIndex = 0;
+
+    function openEasyQuiz() {
+      currentQuizIndex = Math.floor(Math.random() * simpleQuiz.length);
+      renderQuizItem();
+      document.getElementById('quiz-modal').classList.remove('hidden');
+    }
+
+    function closeQuizModal() {
+      document.getElementById('quiz-modal').classList.add('hidden');
+    }
+
+    function renderQuizItem() {
+      const item = simpleQuiz[currentQuizIndex];
+      document.getElementById('quiz-q-text').innerText = item.q;
+      const opts = document.getElementById('quiz-options-container');
+      const feedback = document.getElementById('quiz-feedback-box');
+      feedback.className = 'mt-3.5 p-3 rounded-xl hidden text-xs font-semibold';
+
+      opts.innerHTML = item.opts.map((opt, i) => `
+        <button onclick="checkQuizAnswer(${i})" class="w-full text-left p-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs font-semibold text-slate-200 flex items-center justify-between transition">
+          <span>${opt}</span>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400"></i>
+        </button>
+      `).join('');
+      lucide.createIcons();
+    }
+
+    function checkQuizAnswer(selectedIdx) {
+      const item = simpleQuiz[currentQuizIndex];
+      const feedback = document.getElementById('quiz-feedback-box');
+      feedback.classList.remove('hidden');
+
+      if (selectedIdx === item.correct) {
+        playBeep(660, 'sine', 0.15);
+        feedback.className = 'mt-3.5 p-3 rounded-xl bg-emerald-950/80 border border-emerald-500/50 text-emerald-200 text-xs font-semibold';
+        feedback.innerHTML = `🎉 Correct! ${item.tip}`;
+      } else {
+        playBeep(220, 'sawtooth', 0.15);
+        feedback.className = 'mt-3.5 p-3 rounded-xl bg-rose-950/80 border border-rose-500/50 text-rose-200 text-xs font-semibold';
+        feedback.innerHTML = `Not quite. Correct answer: <strong>${item.opts[item.correct]}</strong>. ${item.tip}`;
+      }
+    }
+
+    function loadNextQuizQuestion() {
+      currentQuizIndex = (currentQuizIndex + 1) % simpleQuiz.length;
+      renderQuizItem();
+    }
+
+    // Initialize default state on load
+    window.addEventListener('DOMContentLoaded', () => {
+      selectSubject('os');
+      lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
